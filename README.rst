@@ -12,9 +12,9 @@ and display them as waveforms in a Jupyter notebook.
 Make changes to your digital design and see the results reflected immediately in the
 waveforms of your notebook!
 
-`myhdlpeek` uses a `Peeker` objects that monitor signals and records
-the time and value when they change.
-Just add the Peekers where you want to monitor something (even at sub-levels
+`myhdlpeek` implements a `Peeker` object that monitors a signal and records
+the time and value when it changes.
+Just add multiple Peekers where you want to monitor something (even at sub-levels
 of a hierarchical design) and then view the collected timing waveforms
 with a single command.
 You can also select which signals are shown, set the beginning and

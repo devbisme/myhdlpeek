@@ -11,5 +11,5 @@ link to see what myhdlpeek can do.
                       `[HTML] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.html>`_
 * Hierarchical adder: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_
                       `[HTML] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.html>`_
-* Other Peeker options: `[Notebook <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_
-                      `[Notebook <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.html>`_
+* Other Peeker options: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_
+                      `[HTML] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.html>`_

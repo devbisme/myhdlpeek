@@ -20,7 +20,9 @@ with a single command.
 You can also select which signals are shown, set the beginning and
 ending times of the display, and set other options.
 
-Here are some examples of Jupyter notebooks using myhdlpeek:
+Below are some examples of Jupyter notebooks using myhdlpeek.
+Unfortunately, Github doesn't render the waveform displays so you'll have to
+download and run the notebooks locally to see what myhdlpeek can do.
 
 * `Simple multiplexer.   <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_
 * `Hierarchical adder.   <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_

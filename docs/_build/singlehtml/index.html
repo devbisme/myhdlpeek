@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>myhdlpeek 0.0.1 documentation</title>
+    <title>myhdlpeek 0.0.2 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1',
+        VERSION:     '0.0.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -29,7 +29,7 @@
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
-        <li class="nav-item nav-item-0"><a href="index.html#document-index">myhdlpeek 0.0.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html#document-index">myhdlpeek 0.0.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -50,20 +50,36 @@
 and display them as waveforms in a Jupyter notebook.
 Make changes to your digital design and see the results reflected immediately in the
 waveforms of your notebook!</p>
-<p><cite>myhdlpeek</cite> uses a <cite>Peeker</cite> objects that monitor signals and records
-the time and value when they change.
-Just add the Peekers where you want to monitor something (even at sub-levels
+<p><cite>myhdlpeek</cite> implements a <cite>Peeker</cite> object that monitors a signal and records
+the time and value when it changes.
+Just add multiple Peekers where you want to monitor something (even at sub-levels
 of a hierarchical design) and then view the collected timing waveforms
 with a single command.
 You can also select which signals are shown, set the beginning and
 ending times of the display, and set other options.</p>
 <p>Below are some examples of Jupyter notebooks using myhdlpeek.
-Unfortunately, Github doesn&#8217;t render the waveform displays so you&#8217;ll have to
-download and run the notebooks locally to see what myhdlpeek can do.</p>
-<ul class="simple">
-<li><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb">Simple multiplexer.</a></li>
-<li><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb">Hierarchical adder.</a></li>
-<li><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb">Other Peeker options.</a></li>
+Unfortunately, the Github Notebook viewer doesn&#8217;t render the waveform displays
+so you&#8217;ll have to download and run the notebooks locally or click on the static HTML
+link to see what myhdlpeek can do.</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Simple multiplexer: <a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb">[Notebook]</a></dt>
+<dd><p class="first last"><a class="reference external" href="http://xesscorp.github.io/myhdlpeek/docs/peeker_simple_mux.html">[HTML]</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Hierarchical adder: <a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb">[Notebook]</a></dt>
+<dd><p class="first last"><a class="reference external" href="http://xesscorp.github.io/myhdlpeek/docs/peeker_hier_add.html">[HTML]</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Other Peeker options: <a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb">[Notebook]</a></dt>
+<dd><p class="first last"><a class="reference external" href="http://xesscorp.github.io/myhdlpeek/docs/peeker_options.html">[HTML]</a></p>
+</dd>
+</dl>
+</li>
 </ul>
 <div class="line-block">
 <div class="line"><br /></div>
@@ -99,12 +115,28 @@ $ pip install myhdlpeek
 <span id="document-usage"></span><div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p>The following Jupyter notebooks will illustrate how to use myhdlpeek.
-Unfortunately, Github doesn&#8217;t render the waveform displays so you&#8217;ll have to
-download and run the notebooks locally to see what myhdlpeek can do.</p>
-<ul class="simple">
-<li><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb">Simple multiplexer.</a></li>
-<li><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb">Hierarchical adder.</a></li>
-<li><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb">Other Peeker options.</a></li>
+Unfortunately, the Github Notebook viewer doesn&#8217;t render the waveform displays
+so you&#8217;ll have to download and run the notebooks locally or click on the static HTML
+link to see what myhdlpeek can do.</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Simple multiplexer: <a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb">[Notebook]</a></dt>
+<dd><p class="first last"><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.html">[HTML]</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Hierarchical adder: <a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb">[Notebook]</a></dt>
+<dd><p class="first last"><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.html">[HTML]</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Other Peeker options: <a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb">[Notebook]</a></dt>
+<dd><p class="first last"><a class="reference external" href="https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.html">[HTML]</a></p>
+</dd>
+</dl>
+</li>
 </ul>
 </div>
 <span id="document-contributing"></span><div class="section" id="contributing">
@@ -286,7 +318,7 @@ and make sure that the tests pass for all supported Python versions.</li>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
-        <li class="nav-item nav-item-0"><a href="index.html#document-index">myhdlpeek 0.0.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html#document-index">myhdlpeek 0.0.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

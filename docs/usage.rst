@@ -8,8 +8,8 @@ so you'll have to download and run the notebooks locally or click on the static 
 link to see what myhdlpeek can do.
 
 * Simple multiplexer: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_
-                      `[HTML] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.html>`_
+                      `[HTML] <http://www.xess.com/static/media/pages/peeker_simple_mux.html>`_
 * Hierarchical adder: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_
-                      `[HTML] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.html>`_
+                      `[HTML] <http://www.xess.com/static/media/pages/peeker_hier_add.html>`_
 * Other Peeker options: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_
-                      `[HTML] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.html>`_
+                      `[HTML] <http://www.xess.com/static/media/pages/peeker_options.html>`_

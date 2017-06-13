@@ -184,7 +184,7 @@ class Trace(list):
 
 
 class Peeker(object):
-    def __init__(self, **signals):
+    def __init__(self, *args, **kwargs):
         '''
         '''
         # clear out the signal list if converting (no tracing/peeking)
@@ -192,14 +192,27 @@ class Peeker(object):
             signals = {}
 
         # @todo: if another `Peeker` was passed, merge the tsigs ...
+        # walk through the *args and **kwargs and create the dict of signals,
+        # if a peeker
+        signals, peekers = [], []
+        for sig in args:
+            if isinstance(sig, SignalType):
+                signals += [(sig._name, sig)]
+            if isinstance(sig, Peeker):
+                signals += [(nm, tsig['sig'])
+                            for nm, tsig in sig.trace_signals.items()]
+        for nm, sig in kwargs.items():
+            if isinstance(sig, SignalType):
+                signals += [(nm, sig)]
+            if isinstance(sig, Peeker):
+                signals += [(nm, tsig['sig'])
+                            for nm, tsig in sig.trace_signals.items()]
+
 
         self.trace_signals = {}
-        for nm, sig in signals.items():
-            if nm == 'name':
-                continue
-
+        for nm, sig in signals:
             # Check to see if a signal is being monitored.
-            if nm != 'name' and not isinstance(sig, SignalType):
+            if not isinstance(sig, SignalType):
                 raise Exception("Can't add Peeker {name} to a non-Signal!".format(name=nm))
 
             # get a unique name if duplicates in the signals kwargs
@@ -222,8 +235,8 @@ class Peeker(object):
                            for nm, tsig in self.trace_signals.items()]
 
         # add this Peeker to the global dictionary of peekers
-        if 'name' in signals:
-            pnm = signals['name']
+        if 'name' in kwargs:
+            pnm = kwargs['name']
         else:
             pnm = 'peeker_{:d}'.format(len(all_peekers))
         all_peekers[pnm] = self
@@ -413,5 +426,5 @@ def sort_names(names):
     return srt_names
 
 def merge_all():
-    ''' merge all the peekers into a single peeker'
-    pass
+    ''' merge all the peekers into a single peeker '''
+    return Peeker(all_peekers.values())

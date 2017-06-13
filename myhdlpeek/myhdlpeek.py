@@ -55,6 +55,11 @@ DEBUG_OBSESSIVE = logging.DEBUG - 2
 # Waveform samples consist of a time and a value.
 Sample = namedtuple('Sample', 'time value')
 
+# a dict of all peekers created, this is useful if peekers are added in
+# buried levels of hierarchy.
+all_peekers = {}
+
+
 class Trace(list):
     '''
     Trace objects are lists that store a sequence of samples. The samples
@@ -179,105 +184,87 @@ class Trace(list):
 
 
 class Peeker(object):
-    _peekers = dict()  # Global list of all Peekers.
-
-    def __init__(self, signal, name):
-
+    def __init__(self, **signals):
+        '''
+        '''
+        # clear out the signal list if converting (no tracing/peeking)
         if _toVerilog._converting or _toVHDL._converting:
-            # Don't create a peeker when converting to VHDL or Verilog.
-            pass
+            signals = {}
 
-        else:
+        # @todo: if another `Peeker` was passed, merge the tsigs ...
+
+        self.trace_signals = {}
+        for nm, sig in signals.items():
+            if nm == 'name':
+                continue
+
             # Check to see if a signal is being monitored.
-            if not isinstance(signal, SignalType):
-                raise Exception("Can't add Peeker {name} to a non-Signal!".format(name=name))
+            if nm != 'name' and not isinstance(sig, SignalType):
+                raise Exception("Can't add Peeker {name} to a non-Signal!".format(name=nm))
 
-            # Create storage for signal trace.
-            self.trace = Trace()
+            # get a unique name if duplicates in the signals kwargs
+            unm = self.unique_name(nm, sig)
 
-            # Create combinational module that triggers when signal changes.
-            @always_comb
-            def peeker_logic():
-                self.trace.store_sample(signal.val) # Store signal value and sim timestamp.
+            t = Trace()
+            self.trace_signals[unm] = dict(sig=sig, trace=t)
+            t.name = unm
+            # Set the width of the signal.
+            t.numbits = sig._nrbits
+            if t.numbits == 0:
+                if isinstance(sig.val, bool):
+                    t.numbits = 1
+                elif isinstance(sig.val, integer_types):
+                    t.numbits = 32  # Gotta pick some width for integers. This sounds good.
+                else:
+                    t.numbits = 32  # Unknown type of value. Just give it this width and hope.
 
-            # Instantiate the peeker module.
-            self.instance = peeker_logic
+        self._instances = [self.peeker_process(tsig)
+                           for nm, tsig in self.trace_signals.items()]
 
-            # Assign a unique name to this peeker.
-            self.name_dup = False  # Start off assuming the name has no duplicates.
-            index = 0  # Starting index for disambiguating duplicates.
-            nm = '{name}[{index}]'.format(**locals())  # Create name with bracketed index.
-            # Search through the peeker names for a match.
-            while nm in self._peekers:
-                # A match was found, so mark the matching names as duplicates.
-                self._peekers[nm].name_dup = True
-                self.name_dup = True
+        # add this Peeker to the global dictionary of peekers
+        if 'name' in signals:
+            pnm = signals['name']
+        else:
+            pnm = 'peeker_{:d}'.format(len(all_peekers))
+        all_peekers[pnm] = self
+
+    def unique_name(self, nm, sig):
+        # Assign a unique name to this peeker.
+        unm, index = nm, 0
+        # Search through the peeker names for a match.
+        for snm, tsig in self.trace_signals.items():
+            if unm == snm and sig is not tsig['sig'] :
                 # Go to the next index and see if that name is taken.
                 index += 1
-                nm = '{name}[{index}]'.format(**locals())
-            self.trace.name = nm  # Assign the unique name.
+                unm = '{name}[{index}]'.format(nm, self.index)
+        return unm
 
-            # Set the width of the signal.
-            self.trace.numbits = signal._nrbits
-            if self.trace.numbits == 0:
-                if isinstance(signal.val, bool):
-                    self.trace.numbits = 1
-                elif isinstance(signal.val, integer_types):
-                    self.trace.numbits = 32  # Gotta pick some width for integers. This sounds good.
-                else:
-                    self.trace.numbits = 32  # Unknown type of value. Just give it this width and hope.
 
-            # Keep a reference to the signal so we can get info about it later, if needed.
-            self.signal = signal
+    def peeker_process(self, signal):
+        trace, sig = signal['trace'], signal['sig']
+        @always_comb
+        def peeker_logic():
+            trace.store_sample(sig.val)
 
-            # Add this peeker to the global list.
-            self._peekers[self.trace.name] = self
+        return peeker_logic
 
-    @classmethod
-    def clear(cls):
+    def clear(self):
         '''Clear the global list of Peekers.'''
-        cls._peekers = dict()
+        self.trace_signals = dict()
 
-    @classmethod
-    def instances(cls):
+    def instances(self):
         '''Return a list of all the instantiated Peeker modules.'''
-        return (p.instance for p in cls.peekers())
+        return self._instances
 
-    @classmethod
-    def peekers(cls):
-        '''Return a list of all the Peekers.'''
-        return cls._peekers.values()
-
-    @classmethod
-    def start_time(cls):
+    def start_time(self):
         '''Return the time of the first signal transition captured by the peekers.'''
-        return min((p.trace.start_time() for p in cls.peekers()))
+        return min((v['trace'].start_time() for nm, v in self.trace_signals.items()))
 
-    @classmethod
-    def stop_time(cls):
+    def stop_time(self):
         '''Return the time of the last signal transition captured by the peekers.'''
-        return max((p.trace.stop_time() for p in cls.peekers()))
+        return max((v['trace'].stop_time() for nm, v in self.trace_signals.items()))
 
-    @classmethod
-    def _clean_names(cls):
-        '''
-        Remove indices from non-repeated peeker names that don't need them.
-
-        When created, all peekers get an index appended to their name to
-        disambiguate any repeated names. If the name isn't actually repeated,
-        then the index is removed.
-        '''
-
-        index_re = '\[\d+\]$'
-        for name, peeker in cls._peekers.items():
-            if not peeker.name_dup:
-                new_name = re.sub(index_re, '', name)
-                if new_name != name:
-                    peeker.trace.name = new_name
-                    cls._peekers[new_name] = cls._peekers.pop(name)
-
-    @classmethod
-    def to_wavejson(cls, *names, start_time=0, stop_time=None, title=None,
+    def to_wavejson(self, *names, start_time=0, stop_time=None, title=None,
                     caption=None, tick=False, tock=False):
         '''
         Convert waveforms stored in peekers into a WaveJSON data structure.
@@ -299,27 +286,18 @@ class Peeker(object):
             A dictionary with the JSON data for the waveforms.
         '''
 
-        cls._clean_names()
-
-        if names:
-            # Go through the provided names and split any containing spaces
-            # into individual names.
-            names = [nm for name in names for nm in name.split()]
-        else:
-            # If no names provided, use all the peekers.
-            names = sort_names(cls._peekers.keys())
-
-        # Collect all the Peekers matching the names.
-        peekers = [cls._peekers.get(name) for name in names]
-
         if stop_time is None:
-            stop_time = cls.stop_time()
+            stop_time = self.stop_time()
 
         wavejson = dict()
         wavejson['signal'] = list()
-        for p in peekers:
+        for nm, tsig in self.trace_signals.items():
+            # if a list of names where
+            if names is not None and nm not in names:
+                continue
+            sig, trace = tsig['sig'], tsig['trace']
             try:
-                wavejson['signal'].append(p.trace.to_wavejson(start_time, stop_time))
+                wavejson['signal'].append(trace.to_wavejson(start_time, stop_time))
             except AttributeError:
                 # This happens if no peeker with the matching name is found.
                 # In that case, insert an empty dictionary to create a blank line.
@@ -349,8 +327,7 @@ class Peeker(object):
 
         return wavejson
 
-    @classmethod
-    def to_wavedrom(cls, *names, start_time=0, stop_time=None, title=None, 
+    def to_wavedrom(self, start_time=0, stop_time=None, title=None,
                     caption=None, tick=False, tock=False, width=None):
         '''
         Display waveforms stored in peekers in Jupyter notebook.
@@ -373,7 +350,7 @@ class Peeker(object):
             Nothing.
         '''
 
-        wavejson_to_wavedrom(cls.to_wavejson(*names, start_time=start_time, stop_time=stop_time, 
+        wavejson_to_wavedrom(self.to_wavejson(start_time=start_time, stop_time=stop_time,
             title=title, caption=caption, tick=tick, tock=tock), width=width)
 
 
@@ -434,3 +411,7 @@ def sort_names(names):
     srt_names = sorted(names, key=name_key)
     srt_names = sorted(srt_names, key=index_key)
     return srt_names
+
+def merge_all():
+    ''' merge all the peekers into a single peeker'
+    pass

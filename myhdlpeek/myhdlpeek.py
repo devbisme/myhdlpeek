@@ -92,24 +92,22 @@ class Trace(list):
 
     def get_index(self, time):
         '''Return the position to insert a sample with the given time.'''
+
         for i, sample in enumerate(self):
-            if sample.time >= time:
+            # Return the index of the 1st sample with a time GREATER than the
+            # given time because the sample will be inserted BEFORE that index.
+            if sample.time > time:
                 return i
+
+        # Didn't find a sample with a time greater than the given time, so
+        # the insertion point is the end of the trace list.
         return len(self)
 
     def get_value(self, time):
         '''Get the trace value at an arbitrary time.'''
 
-        # Get the index of the sample with the time >= to the given time.
-        index = min(len(self) - 1, self.get_index(time))
-
-        # If the selected sample was taken at a time after the given time,
-        # then backup to the previous sample (but not past the beginning).
-        if self[index].time > time:
-            index = max(0, index - 1)
-
-        # Return the value of the sample at the indexed position.
-        return self[index].value
+        # Return the signal value immediately BEFORE the insertion index.
+        return self[max(0, self.get_index(time)-1)].value
 
     def get_sample_times(self):
         '''Return list of times at which the trace was sampled.'''
@@ -436,7 +434,7 @@ class Peeker(object):
         else:
             width = None
 
-        _wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width)
+        wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width)
 
     @classmethod
     def to_table_data(cls, *names, **kwargs):
@@ -532,7 +530,7 @@ show_text_table = Peeker.show_text_table
 show_html_table = Peeker.show_html_table
 
 
-def _wavejson_to_wavedrom(wavejson, width=None):
+def wavejson_to_wavedrom(wavejson, width=None):
     '''
     Create WaveDrom display from WaveJSON data.
 

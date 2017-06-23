@@ -44,6 +44,8 @@ from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog
 from myhdl.conversion import _toVHDL
 
+from tabulate import tabulate
+
 import IPython.display as DISP
 import json
 
@@ -108,6 +110,10 @@ class Trace(list):
 
         # Return the value of the sample at the indexed position.
         return self[index].value
+
+    def get_sample_times(self):
+        '''Return list of times at which the trace was sampled.'''
+        return [sample.time for sample in self]
 
     def to_wavejson(self, start_time, stop_time):
         '''Generate the WaveJSON data for a trace between the start & stop times.'''
@@ -314,34 +320,28 @@ class Peeker(object):
         # Handle keyword args explicitly for Python 2 compatibility.
         if 'tock' in kwargs:
             tock = kwargs['tock']
-            del kwargs['tock']
         else:
             tock = False
         if 'tick' in kwargs:
             tick = kwargs['tick']
-            del kwargs['tick']
         else:
             tick = False
         if 'caption' in kwargs:
             caption = kwargs['caption']
-            del kwargs['caption']
         else:
             caption = None
         if 'title' in kwargs:
             title = kwargs['title']
-            del kwargs['title']
         else:
             title = None
         if 'stop_time' in kwargs:
             stop_time = kwargs['stop_time']
-            del kwargs['stop_time']
         else:
-            stop_time = None
+            stop_time = cls.stop_time()
         if 'start_time' in kwargs:
             start_time = kwargs['start_time']
-            del kwargs['start_time']
         else:
-            start_time = 0
+            start_time = cls.start_time()
 
         cls._clean_names()
 
@@ -351,7 +351,7 @@ class Peeker(object):
             names = [nm for name in names for nm in name.split()]
         else:
             # If no names provided, use all the peekers.
-            names = sort_names(cls._peekers.keys())
+            names = _sort_names(cls._peekers.keys())
 
         # Collect all the Peekers matching the names.
         peekers = [cls._peekers.get(name) for name in names]
@@ -435,50 +435,104 @@ class Peeker(object):
             del kwargs['width']
         else:
             width = None
-        if 'tock' in kwargs:
-            tock = kwargs['tock']
-            del kwargs['tock']
-        else:
-            tock = False
-        if 'tick' in kwargs:
-            tick = kwargs['tick']
-            del kwargs['tick']
-        else:
-            tick = False
+
+        _wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width)
+
+    @classmethod
+    def to_table_data(cls, *names, **kwargs):
+        '''
+        Convert traces stored in peekers into a list of times and trace values.
+
+        Args:
+            *names: A list of strings containing the names for the Peekers that
+                will be processed. A string may contain multiple,
+                space-separated names.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the traces.
+            stop_time: The latest (right-most) time bound for the traces.
+
+        Returns:
+            List of lists containing the time and the value of each trace at that time.
+        '''
+
         if 'caption' in kwargs:
             caption = kwargs['caption']
-            del kwargs['caption']
         else:
             caption = None
         if 'title' in kwargs:
             title = kwargs['title']
-            del kwargs['title']
         else:
             title = None
         if 'stop_time' in kwargs:
             stop_time = kwargs['stop_time']
-            del kwargs['stop_time']
         else:
-            stop_time = None
+            stop_time = cls.stop_time()
         if 'start_time' in kwargs:
             start_time = kwargs['start_time']
-            del kwargs['start_time']
         else:
-            start_time = 0
+            start_time = cls.start_time()
 
-        wavejson_to_wavedrom(
-            cls.to_wavejson(
-                *names,
-                start_time=start_time,
-                stop_time=stop_time,
-                title=title,
-                caption=caption,
-                tick=tick,
-                tock=tock),
-            width=width)
+        if names:
+            # Go through the provided names and split any containing spaces
+            # into individual names.
+            names = [nm for name in names for nm in name.split()]
+        else:
+            # If no names provided, use all the peekers.
+            names = _sort_names(cls._peekers.keys())
+
+        # Collect all the Peekers matching the names.
+        peekers = [cls._peekers.get(name) for name in names]
+
+        # Get all the sample times of all the traces.
+        times = set()
+        for peeker in peekers:
+            times.update(set(peeker.trace.get_sample_times()))
+        times = sorted(list(times))
+
+        # Create a table from lines of data where the first element in each line
+        # is the sample time and the following elements are the trace values.
+        table_data = list()
+        for time in times:
+            if start_time <= time <= stop_time:
+                line_data = [p.trace.get_value(time) for p in peekers]
+                line_data.insert(0, time)
+                table_data.append(line_data)
+        headers = ['Time'] + names
+        return table_data, headers
+
+    @classmethod
+    def to_table(cls, *names, **kwargs):
+
+        if 'format' in kwargs:
+            format = kwargs['format']
+        else:
+            format = 'simple'
+
+        table_data, headers = cls.to_table_data(*names, **kwargs)
+        return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)
+
+    @classmethod
+    def show_text_table(cls, *names, **kwargs):
+        if 'format' not in kwargs:
+            kwargs['format'] = 'simple'
+        print(cls.to_table(*names, **kwargs))
+
+    @classmethod
+    def show_html_table(cls, *names, **kwargs):
+        kwargs['format'] = 'html'
+        tbl_html = cls.to_table(*names, **kwargs)
+
+        # Generate the HTML from the JSON.
+        DISP.display_html(DISP.HTML(tbl_html))
+        
+
+show_waveforms = Peeker.to_wavedrom
+show_text_table = Peeker.show_text_table
+show_html_table = Peeker.show_html_table
 
 
-def wavejson_to_wavedrom(wavejson, width=None):
+def _wavejson_to_wavedrom(wavejson, width=None):
     '''
     Create WaveDrom display from WaveJSON data.
 
@@ -514,7 +568,7 @@ def wavejson_to_wavedrom(wavejson, width=None):
     #DISP.display_html(DISP.HTML(setup))
 
 
-def sort_names(names):
+def _sort_names(names):
     '''
     Sort peeker names by index and alphabetically.
 

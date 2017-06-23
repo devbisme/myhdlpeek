@@ -26,6 +26,10 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 from __future__ import absolute_import
+from builtins import super
+from builtins import int
+from builtins import dict
+from builtins import str
 from future import standard_library
 standard_library.install_aliases()
 
@@ -54,6 +58,7 @@ DEBUG_OBSESSIVE = logging.DEBUG - 2
 
 # Waveform samples consist of a time and a value.
 Sample = namedtuple('Sample', 'time value')
+
 
 class Trace(list):
     '''
@@ -94,12 +99,12 @@ class Trace(list):
         '''Get the trace value at an arbitrary time.'''
 
         # Get the index of the sample with the time >= to the given time.
-        index = min( len(self)-1, self.get_index(time) )
+        index = min(len(self) - 1, self.get_index(time))
 
         # If the selected sample was taken at a time after the given time,
         # then backup to the previous sample (but not past the beginning).
         if self[index].time > time:
-            index = max(0, index-1)
+            index = max(0, index - 1)
 
         # Return the value of the sample at the indexed position.
         return self[index].value
@@ -107,11 +112,11 @@ class Trace(list):
     def to_wavejson(self, start_time, stop_time):
         '''Generate the WaveJSON data for a trace between the start & stop times.'''
 
-        has_samples = False     # No samples currently on the wave.
-        wave_str = ''           # No samples, so wave string is empty.
-        wave_data = list()      # No samples, so wave data values are empty.
+        has_samples = False  # No samples currently on the wave.
+        wave_str = ''  # No samples, so wave string is empty.
+        wave_data = list()  # No samples, so wave data values are empty.
         prev_time = start_time  # Set time of previous sample to the wave starting time.
-        prev_val = None         # Value of previous sample starts at non-number.
+        prev_val = None  # Value of previous sample starts at non-number.
 
         # Save the current state of the waveform.
         prev = [has_samples, wave_str, copy(wave_data), prev_time, prev_val]
@@ -119,8 +124,10 @@ class Trace(list):
         # Insert samples into a copy of the waveform data. These samples bound
         # the beginning and ending times of the waveform.
         bounded_samples = copy(self)
-        bounded_samples.insert_sample(Sample(start_time, self.get_value(start_time)))
-        bounded_samples.insert_sample(Sample(stop_time, self.get_value(stop_time)))
+        bounded_samples.insert_sample(
+            Sample(start_time, self.get_value(start_time)))
+        bounded_samples.insert_sample(
+            Sample(stop_time, self.get_value(stop_time)))
 
         # Create the waveform by processing the waveform data.
         for time, val in bounded_samples:
@@ -140,12 +147,15 @@ class Trace(list):
                 has_samples, wave_str, wave_data, prev_time, prev_val = prev
 
             # Save the current waveform in case a back-up is needed.
-            prev = [has_samples, wave_str, copy(wave_data), prev_time, prev_val]
+            prev = [
+                has_samples, wave_str,
+                copy(wave_data), prev_time, prev_val
+            ]
 
             # If the current sample occurred after the desired time window,
             # then just extend the previous sample up to the end of the window.
             if time > stop_time:
-                val = prev_val   # Use the value of the previous sample.
+                val = prev_val  # Use the value of the previous sample.
                 time = stop_time  # Extend it to the end of the window.
 
             # Replicate the sample's previous value up to the current time.
@@ -166,8 +176,8 @@ class Trace(list):
                     wave_str += str(val * 1)  # Turn value into '1' or '0'.
 
             has_samples = True  # The waveform now contains samples.
-            prev_time = time    # Save the time and value of the
-            prev_val = val      #   sample that was just added to the waveform.
+            prev_time = time  # Save the time and value of the
+            prev_val = val  #   sample that was just added to the waveform.
 
         # Return a dictionary with the wave in a format that WaveDrom understands.
         wave = dict()
@@ -190,7 +200,8 @@ class Peeker(object):
         else:
             # Check to see if a signal is being monitored.
             if not isinstance(signal, SignalType):
-                raise Exception("Can't add Peeker {name} to a non-Signal!".format(name=name))
+                raise Exception("Can't add Peeker {name} to a non-Signal!".
+                                format(name=name))
 
             # Create storage for signal trace.
             self.trace = Trace()
@@ -198,7 +209,8 @@ class Peeker(object):
             # Create combinational module that triggers when signal changes.
             @always_comb
             def peeker_logic():
-                self.trace.store_sample(signal.val) # Store signal value and sim timestamp.
+                self.trace.store_sample(
+                    signal.val)  # Store signal value and sim timestamp.
 
             # Instantiate the peeker module.
             self.instance = peeker_logic
@@ -206,7 +218,8 @@ class Peeker(object):
             # Assign a unique name to this peeker.
             self.name_dup = False  # Start off assuming the name has no duplicates.
             index = 0  # Starting index for disambiguating duplicates.
-            nm = '{name}[{index}]'.format(**locals())  # Create name with bracketed index.
+            nm = '{name}[{index}]'.format(
+                **locals())  # Create name with bracketed index.
             # Search through the peeker names for a match.
             while nm in self._peekers:
                 # A match was found, so mark the matching names as duplicates.
@@ -277,8 +290,7 @@ class Peeker(object):
                     cls._peekers[new_name] = cls._peekers.pop(name)
 
     @classmethod
-    def to_wavejson(cls, *names, start_time=0, stop_time=None, title=None,
-                    caption=None, tick=False, tock=False):
+    def to_wavejson(cls, *names, **kwargs):
         '''
         Convert waveforms stored in peekers into a WaveJSON data structure.
 
@@ -298,6 +310,38 @@ class Peeker(object):
         Returns:
             A dictionary with the JSON data for the waveforms.
         '''
+
+        # Handle keyword args explicitly for Python 2 compatibility.
+        if 'tock' in kwargs:
+            tock = kwargs['tock']
+            del kwargs['tock']
+        else:
+            tock = False
+        if 'tick' in kwargs:
+            tick = kwargs['tick']
+            del kwargs['tick']
+        else:
+            tick = False
+        if 'caption' in kwargs:
+            caption = kwargs['caption']
+            del kwargs['caption']
+        else:
+            caption = None
+        if 'title' in kwargs:
+            title = kwargs['title']
+            del kwargs['title']
+        else:
+            title = None
+        if 'stop_time' in kwargs:
+            stop_time = kwargs['stop_time']
+            del kwargs['stop_time']
+        else:
+            stop_time = None
+        if 'start_time' in kwargs:
+            start_time = kwargs['start_time']
+            del kwargs['start_time']
+        else:
+            start_time = 0
 
         cls._clean_names()
 
@@ -319,7 +363,8 @@ class Peeker(object):
         wavejson['signal'] = list()
         for p in peekers:
             try:
-                wavejson['signal'].append(p.trace.to_wavejson(start_time, stop_time))
+                wavejson['signal'].append(
+                    p.trace.to_wavejson(start_time, stop_time))
             except AttributeError:
                 # This happens if no peeker with the matching name is found.
                 # In that case, insert an empty dictionary to create a blank line.
@@ -329,7 +374,15 @@ class Peeker(object):
         if title or tick or tock:
             head = dict()
             if title:
-                head['text'] = ['tspan', ['tspan', {'fill':'blue', 'font-size':'16', 'font-weight':'bold'}, title]]
+                head['text'] = [
+                    'tspan', [
+                        'tspan', {
+                            'fill': 'blue',
+                            'font-size': '16',
+                            'font-weight': 'bold'
+                        }, title
+                    ]
+                ]
             if tick:
                 head['tick'] = start_time
             if tock:
@@ -340,7 +393,11 @@ class Peeker(object):
         if caption or tick or tock:
             foot = dict()
             if caption:
-                foot['text'] = ['tspan', ['tspan', {'font-style': 'italic'}, caption]]
+                foot['text'] = [
+                    'tspan', ['tspan', {
+                        'font-style': 'italic'
+                    }, caption]
+                ]
             if tick:
                 foot['tick'] = start_time
             if tock:
@@ -350,8 +407,7 @@ class Peeker(object):
         return wavejson
 
     @classmethod
-    def to_wavedrom(cls, *names, start_time=0, stop_time=None, title=None, 
-                    caption=None, tick=False, tock=False, width=None):
+    def to_wavedrom(cls, *names, **kwargs):
         '''
         Display waveforms stored in peekers in Jupyter notebook.
 
@@ -373,8 +429,53 @@ class Peeker(object):
             Nothing.
         '''
 
-        wavejson_to_wavedrom(cls.to_wavejson(*names, start_time=start_time, stop_time=stop_time, 
-            title=title, caption=caption, tick=tick, tock=tock), width=width)
+        # Handle keyword args explicitly for Python 2 compatibility.
+        if 'width' in kwargs:
+            width = kwargs['width']
+            del kwargs['width']
+        else:
+            width = None
+        if 'tock' in kwargs:
+            tock = kwargs['tock']
+            del kwargs['tock']
+        else:
+            tock = False
+        if 'tick' in kwargs:
+            tick = kwargs['tick']
+            del kwargs['tick']
+        else:
+            tick = False
+        if 'caption' in kwargs:
+            caption = kwargs['caption']
+            del kwargs['caption']
+        else:
+            caption = None
+        if 'title' in kwargs:
+            title = kwargs['title']
+            del kwargs['title']
+        else:
+            title = None
+        if 'stop_time' in kwargs:
+            stop_time = kwargs['stop_time']
+            del kwargs['stop_time']
+        else:
+            stop_time = None
+        if 'start_time' in kwargs:
+            start_time = kwargs['start_time']
+            del kwargs['start_time']
+        else:
+            start_time = 0
+
+        wavejson_to_wavedrom(
+            cls.to_wavejson(
+                *names,
+                start_time=start_time,
+                stop_time=stop_time,
+                title=title,
+                caption=caption,
+                tick=tick,
+                tock=tock),
+            width=width)
 
 
 def wavejson_to_wavedrom(wavejson, width=None):
@@ -391,14 +492,17 @@ def wavejson_to_wavedrom(wavejson, width=None):
 
     # Generate the HTML from the JSON.
     htmldata = '<div{style}><script type="WaveDrom">{json}</script></div>'.format(
-                    style=style, json=json.dumps(wavejson))
+        style=style, json=json.dumps(wavejson))
     DISP.display_html(DISP.HTML(htmldata))
 
     # Trigger the WaveDrom Javascript that creates the graphical display.
-    DISP.display_javascript(DISP.Javascript(
-        data='WaveDrom.ProcessAll();',
-        lib=['http://wavedrom.com/wavedrom.min.js',
-             'http://wavedrom.com/skins/default.js']))
+    DISP.display_javascript(
+        DISP.Javascript(
+            data='WaveDrom.ProcessAll();',
+            lib=[
+                'http://wavedrom.com/wavedrom.min.js',
+                'http://wavedrom.com/skins/default.js'
+            ]))
 
     # The following allows the display of WaveDROM in the HTML files generated by nbconvert.
     # It's disabled because it makes Github's nbconvert freak out.
@@ -421,7 +525,7 @@ def sort_names(names):
         '''Index sorting.'''
         m = re.match('.*\[(\d+)\]$', lbl)  # Get the bracketed index.
         if m:
-            return int(m.group(1)) # Return the index as an integer.
+            return int(m.group(1))  # Return the index as an integer.
         return -1  # No index found so it comes before everything else.
 
     def name_key(lbl):

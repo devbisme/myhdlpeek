@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 author = 'XESS Corp.'
 email = 'info@xess.com'
-version = '0.0.2'
+version = '0.0.3'
 
 if 'sdist' in sys.argv[1:]:
     with open('myhdlpeek/pckg_info.py','w') as f:
@@ -29,6 +29,8 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     # Put package requirements here
     'future >= 0.15.0',
+    'myhdl',
+    'tabulate',
 ]
 
 test_requirements = [
@@ -56,7 +58,7 @@ setup(
     zip_safe=False,
     keywords='myhdlpeek',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',

@@ -471,6 +471,8 @@ class Peeker(object):
         else:
             start_time = cls.start_time()
 
+        cls._clean_names()
+
         if names:
             # Go through the provided names and split any containing spaces
             # into individual names.

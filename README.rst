@@ -25,9 +25,12 @@ Unfortunately, the Github Notebook viewer doesn't render the waveform displays
 so you'll have to download and run the notebooks locally or click on the static HTML
 link to see what myhdlpeek can do.
 
-* Simple multiplexer: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_simple_mux.html>`_
-* Hierarchical adder: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_hier_add.html>`_
-* Other Peeker options: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_options.html>`_
+* Simple multiplexer: `[Notebook1] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_ `[HTML1] <http://www.xess.com/static/media/pages/peeker_simple_mux.html>`_
+* Hierarchical adder: `[Notebook2] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_ `[HTML2] <http://www.xess.com/static/media/pages/peeker_hier_add.html>`_
+* Other Peeker options: `[Notebook3] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_ `[HTML3] <http://www.xess.com/static/media/pages/peeker_options.html>`_
+* Tabular display: `[Notebook4] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_tables.ipynb>`_ `[HTML4] <http://www.xess.com/static/media/pages/peeker_tables.html>`_
+* Convenience functions: `[Notebook5] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_convenience_functions.ipynb>`_ `[HTML5] <http://www.xess.com/static/media/pages/peeker_convenience_functions.html>`_
+* Trigger functions: `[Notebook6] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_triggers.ipynb>`_ `[HTML6] <http://www.xess.com/static/media/pages/peeker_triggers.html>`_
 
 |
 
@@ -43,3 +46,5 @@ Features
 * The beginning and ending points of the waveform display can be set.
 * Timing marks can be turned on or off.
 * Titles and captions are supported.
+* Tabular output in Jupyter and console.
+* Trigger expressions allow the display of a selected portion of traces.

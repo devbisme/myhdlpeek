@@ -1,0 +1,13 @@
+To make the HTML files exported from Jupyter displayable, add the following lines
+right before the <body> tag:
+
+<script src="http://wavedrom.com/skins/default.js" type="text/javascript"></script>
+<script src="http://wavedrom.com/wavedrom.min.js" type="text/javascript"></script>
+<body onload="WaveDrom.ProcessAll()">
+
+Then save the HTML file to the /srv/www/xess/static/media/pages directory
+on the Digital Ocean server.
+
+Finally, reference the HTML file in the README.rst and usage.rst files like this:
+
+* Other Peeker options: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_options.html>`_

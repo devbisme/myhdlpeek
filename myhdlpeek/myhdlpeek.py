@@ -846,6 +846,79 @@ class Peeker(object):
         return self.trace.trig_times()
 
 
+class PeekerGroup(dict):
+
+    def __init__(self, **kwargs):
+        super().__init__()
+        for name, signal in kwargs.items():
+            peeker = Peeker(signal, name)
+            self[name] = peeker
+            setattr(self, name, peeker)
+
+    def to_wavedrom(self, *names, **kwargs):
+        '''
+        Display waveforms stored in peekers in Jupyter notebook.
+
+        Args:
+            *names: A list of strings containing the names for the Peekers that
+                will be displayed. A string may contain multiple,
+                space-separated names.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the waveform display.
+            stop_time: The latest (right-most) time bound for the waveform display.
+            title: String containing the title placed across the top of the display.
+            caption: String containing the title placed across the bottom of the display.
+            tick: If true, times are shown at the tick marks of the display.
+            tock: If true, times are shown between the tick marks of the display.
+            width: The width of the waveform display in pixels.
+
+        Returns:
+            Nothing.
+        '''
+
+        if names:
+            # Go through the provided names and split any containing spaces
+            # into individual names.
+            names = [nm for name in names for nm in name.split()]
+        else:
+            # If no names provided, use all the peekers in this group.
+            names = self.keys()
+
+        Peeker._clean_names()
+        peeker_names = [self[n].trace.name for n in names]
+        Peeker.to_wavedrom(*peeker_names, **kwargs)
+
+    def to_table(self, *names, **kwargs):
+
+        format = kwargs.get('format', 'simple')
+
+        if names:
+            # Go through the provided names and split any containing spaces
+            # into individual names.
+            names = [nm for name in names for nm in name.split()]
+        else:
+            # If no names provided, use all the peekers in this group.
+            names = self.keys()
+
+        Peeker._clean_names()
+        peeker_names = [self[n].trace.name for n in names]
+
+        return Peeker.to_table(*peeker_names, **kwargs)
+
+    def to_text_table(self, *names, **kwargs):
+        if 'format' not in kwargs:
+            kwargs['format'] = 'simple'
+        print(self.to_table(*names, **kwargs))
+
+    def to_html_table(self, *names, **kwargs):
+        kwargs['format'] = 'html'
+        tbl_html = self.to_table(*names, **kwargs)
+
+        # Generate the HTML from the JSON.
+        DISP.display_html(DISP.HTML(tbl_html))
+        
+
 # Convenience functions.
 show_waveforms = Peeker.to_wavedrom
 show_text_table = Peeker.to_text_table

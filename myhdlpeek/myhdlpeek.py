@@ -108,7 +108,7 @@ class Trace(list):
         '''Get the trace value at an arbitrary time.'''
 
         # Return the signal value immediately BEFORE the insertion index.
-        return self[max(0, self.get_index(time)-1)].value
+        return int(self[max(0, self.get_index(time)-1)].value)
 
     def get_sample_times(self):
         '''Return list of times at which the trace was sampled.'''

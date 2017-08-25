@@ -3,6 +3,13 @@
 History
 -------
 
+0.0.5 (2017-08-25)
+______________________
+
+* Added PeekerGroup class to allow grouping of Peekers.
+* Trace objects now only return integer values.
+
+
 0.0.4 (2017-07-04)
 ______________________
 

@@ -40,7 +40,7 @@ from collections import namedtuple
 from copy import copy, deepcopy
 import logging
 
-from myhdl import Signal, always_comb, intbv, now, SignalType
+from myhdl import Signal, always_comb, intbv, now, SignalType, EnumItemType
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog
 from myhdl.conversion import _toVHDL
@@ -108,7 +108,10 @@ class Trace(list):
         '''Get the trace value at an arbitrary time.'''
 
         # Return the signal value immediately BEFORE the insertion index.
-        return int(self[max(0, self.get_index(time)-1)].value)
+        val = self[max(0, self.get_index(time)-1)].value
+        if isinstance(val, EnumItemType):
+            return val
+        return int(val)
 
     def get_sample_times(self):
         '''Return list of times at which the trace was sampled.'''
@@ -167,12 +170,16 @@ class Trace(list):
             wave_str += '.' * (time - prev_time - 1)
 
             # Add the current sample's value to the waveform.
-            if val == prev_val and has_samples:
+
+            if has_samples and (val == prev_val):
                 # Just extend the previous sample if the current sample has the same value.
                 wave_str += '.'
             else:
                 # Otherwise, add a new sample value.
-                if self.num_bits > 1:
+                if isinstance(val, EnumItemType):
+                    wave_str += '='
+                    wave_data.append(str(val))
+                elif self.num_bits > 1:
                     # Value will be shown in a data "envelope".
                     wave_str += '='
                     wave_data.append(str(val))
@@ -563,14 +570,15 @@ class Peeker(object):
             self.trace.name = nm  # Assign the unique name.
 
             # Set the width of the signal.
-            self.trace.num_bits = signal._nrbits
-            if self.trace.num_bits == 0:
-                if isinstance(signal.val, bool):
-                    self.trace.num_bits = 1
-                elif isinstance(signal.val, integer_types):
-                    self.trace.num_bits = 32  # Gotta pick some width for integers. This sounds good.
-                else:
-                    self.trace.num_bits = 32  # Unknown type of value. Just give it this width and hope.
+            if not isinstance(signal.val, EnumItemType):
+                self.trace.num_bits = signal._nrbits
+                if self.trace.num_bits == 0:
+                    if isinstance(signal.val, bool):
+                        self.trace.num_bits = 1
+                    elif isinstance(signal.val, integer_types):
+                        self.trace.num_bits = 32  # Gotta pick some width for integers. This sounds good.
+                    else:
+                        self.trace.num_bits = 32  # Unknown type of value. Just give it this width and hope.
 
             # Keep a reference to the signal so we can get info about it later, if needed.
             self.signal = signal

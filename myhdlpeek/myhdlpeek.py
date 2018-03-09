@@ -40,6 +40,8 @@ from collections import namedtuple
 from copy import copy, deepcopy
 import logging
 
+import pandas as pd
+
 from myhdl import Signal, always_comb, intbv, now, SignalType, EnumItemType
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog
@@ -113,9 +115,11 @@ class Trace(list):
             return val
         return int(val)
 
-    def get_sample_times(self):
+    def get_sample_times(self, **kwargs):
         '''Return list of times at which the trace was sampled.'''
-        return [sample.time for sample in self]
+        start_time = kwargs.pop('start_time', self.start_time())
+        stop_time = kwargs.pop('stop_time', self.stop_time())
+        return [sample.time for sample in self if start_time <= sample.time <= stop_time]
 
     def to_wavejson(self, start_time, stop_time):
         '''Generate the WaveJSON data for a trace between the start & stop times.'''
@@ -365,6 +369,51 @@ class Trace(list):
         return [sample.time for sample in self if sample.value]
 
 
+def traces_to_dataframe(*traces, **kwargs):
+    '''
+    Create Pandas dataframe of sample times and values for a set of traces.
+
+        Args:
+            *traces: A list of traces with samples. Can also contain non-Traces
+                which will be ignored.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the traces.
+            stop_time: The latest (right-most) time bound for the traces.
+            step: Set the time increment for filling in between sample times.
+                If 0, then don't fill in between sample times.
+
+        Returns:
+            A Pandas dataframe of sample times and values for a set of traces.
+    '''
+
+    # Remove all the non-traces.
+    traces = [t for t in traces if isinstance(t, Trace)]
+
+    # Set the time boundaries for the DataFrame.
+    max_stop_time = max([trace.stop_time() for trace in traces if isinstance(trace, Trace)])
+    stop_time = kwargs.pop('stop_time', max_stop_time)
+    min_start_time = min([trace.start_time() for trace in traces if isinstance(trace, Trace)])
+    start_time = kwargs.pop('start_time', min_start_time)
+
+    # Get all the sample times of all the traces.
+    times = set([start_time, stop_time])
+    for trace in traces:
+        times.update(set(trace.get_sample_times(start_time=start_time, stop_time=stop_time)))
+
+    # If requested, fill in additional times between sample times.
+    step = kwargs.pop('step', 0)
+    if step:
+        times.update(set(range(start_time, stop_time+1, step)))
+
+    times = sorted(list(times))  # Sort sample times in increasing order.
+
+    # Create dict of trace sample lists.
+    trace_data = {tr.name: [tr.get_value(t) for t in times] for tr in traces}
+
+    # Return a DataFrame where each column is a trace and time is the index.
+    return pd.DataFrame(trace_data, index = times)
+
 def traces_to_table_data(*traces, **kwargs):
     '''
     Create table of sample times and values for a set of traces.
@@ -376,37 +425,42 @@ def traces_to_table_data(*traces, **kwargs):
         Keywords Args:
             start_time: The earliest (left-most) time bound for the traces.
             stop_time: The latest (right-most) time bound for the traces.
+            step: Set the time increment for filling in between sample times.
+                If 0, then don't fill in between sample times.
 
         Returns:
             Table data and a list of headers for table columns.
     '''
 
-    # Set the time boundaries for the table.
-    if 'stop_time' in kwargs:
-        stop_time = kwargs['stop_time']
-    else:
-        stop_time = max([trace.stop_time() for trace in traces if isinstance(trace, Trace)])
-    if 'start_time' in kwargs:
-        start_time = kwargs['start_time']
-    else:
-        start_time = min([trace.start_time() for trace in traces if isinstance(trace, Trace)])
+    # Remove all the non-traces.
+    traces = [t for t in traces if isinstance(t, Trace)]
+
+    # Set the time boundaries for the DataFrame.
+    max_stop_time = max([trace.stop_time() for trace in traces if isinstance(trace, Trace)])
+    stop_time = kwargs.pop('stop_time', max_stop_time)
+    min_start_time = min([trace.start_time() for trace in traces if isinstance(trace, Trace)])
+    start_time = kwargs.pop('start_time', min_start_time)
 
     # Get all the sample times of all the traces.
     times = set([start_time, stop_time])
     for trace in traces:
-        if isinstance(trace, Trace):
-            times.update(set(trace.get_sample_times()))
-    times = sorted(list(times))
+        times.update(set(trace.get_sample_times(start_time=start_time, stop_time=stop_time)))
 
-    # Create a table from lines of data where the first element in each line
+    # If requested, fill in additional times between sample times.
+    step = kwargs.pop('step', 0)
+    if step:
+        times.update(set(range(start_time, stop_time+1, step)))
+
+    times = sorted(list(times))  # Sort sample times in increasing order.
+
+    # Create a table from lines of data where the first element in each row
     # is the sample time and the following elements are the trace values.
     table_data = list()
     for time in times:
-        if start_time <= time <= stop_time:
-            line_data = [trace.get_value(time) for trace in traces if isinstance(trace, Trace)]
-            line_data.insert(0, time)
-            table_data.append(line_data)
-    headers = ['Time'] + [trace.name for trace in traces if isinstance(trace, Trace)]
+        row = [trace.get_value(time) for trace in traces]
+        row.insert(0, time)
+        table_data.append(row)
+    headers = ['Time'] + [trace.name for trace in traces]
     return table_data, headers
 
 def traces_to_table(*traces, **kwargs):
@@ -703,6 +757,41 @@ class Peeker(object):
         wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width, skin=skin)
 
     @classmethod
+    def to_dataframe(cls, *names, **kwargs):
+        '''
+        Convert traces stored in peekers into a Pandas DataFrame of times and trace values.
+
+        Args:
+            *names: A list of strings containing the names for the Peekers that
+                will be processed. A string may contain multiple,
+                space-separated names.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the traces.
+            stop_time: The latest (right-most) time bound for the traces.
+            step: Set the time increment for filling in between sample times.
+                If 0, then don't fill in between sample times.
+
+        Returns:
+            A DataFrame with the columns for the named traces and time as the index.
+        '''
+
+        cls._clean_names()
+
+        if names:
+            # Go through the provided names and split any containing spaces
+            # into individual names.
+            names = [nm for name in names for nm in name.split()]
+        else:
+            # If no names provided, use all the peekers.
+            names = _sort_names(cls._peekers.keys())
+
+        # Collect all the traces for the Peekers matching the names.
+        traces = [getattr(cls._peekers.get(name), 'trace', None) for name in names]
+
+        return traces_to_dataframe(*traces, **kwargs)
+
+    @classmethod
     def to_table_data(cls, *names, **kwargs):
         '''
         Convert traces stored in peekers into a list of times and trace values.
@@ -715,6 +804,8 @@ class Peeker(object):
         Keywords Args:
             start_time: The earliest (left-most) time bound for the traces.
             stop_time: The latest (right-most) time bound for the traces.
+            step: Set the time increment for filling in between sample times.
+                If 0, then don't fill in between sample times.
 
         Returns:
             List of lists containing the time and the value of each trace at that time.
@@ -738,11 +829,7 @@ class Peeker(object):
     @classmethod
     def to_table(cls, *names, **kwargs):
 
-        if 'format' in kwargs:
-            format = kwargs['format']
-        else:
-            format = 'simple'
-
+        format = kwargs.pop('format', 'simple')
         table_data, headers = cls.to_table_data(*names, **kwargs)
         return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)
 

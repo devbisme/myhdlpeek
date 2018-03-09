@@ -828,7 +828,6 @@ class Peeker(object):
 
     @classmethod
     def to_table(cls, *names, **kwargs):
-
         format = kwargs.pop('format', 'simple')
         table_data, headers = cls.to_table_data(*names, **kwargs)
         return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)

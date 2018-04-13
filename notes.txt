@@ -1,0 +1,8 @@
+* Update history.rst.
+* Add new features to readme.rst.
+* Add new examples to readme.rst and docs/usage.rst.
+* Update version in setup.py.
+* Run `python setup.py sdist` to update version in myhdlpeek/pkg_info.py.
+* Run `make singlehtml` in docs.
+* Run `git commit -a -m "Bumped version."`
+* Run `python setup.py sdist upload`

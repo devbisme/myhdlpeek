@@ -14,3 +14,4 @@ link to see what myhdlpeek can do.
 * Convenience functions: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_convenience_functions.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_convenience_functions.html>`_
 * Trigger functions: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_triggers.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_triggers.html>`_
 * Peeker groups: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_groups.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_groups.html>`_
+* Pandas export: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_dataframe.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_dataframe.html>`_

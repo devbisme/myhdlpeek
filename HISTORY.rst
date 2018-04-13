@@ -4,6 +4,13 @@ History
 -------
 
 
+0.0.7 (2018-04-13)
+______________________
+
+* Added functions to export signal traces into a Pandas dataframe.
+* Updated documentation.
+
+
 0.0.6 (2017-10-11)
 ______________________
 

@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 author = 'XESS Corp.'
 email = 'info@xess.com'
-version = '0.0.6'
+version = '0.0.7'
 
 if 'sdist' in sys.argv[1:]:
     with open('myhdlpeek/pckg_info.py','w') as f:

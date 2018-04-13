@@ -1006,6 +1006,7 @@ clear_traces = Peeker.clear_traces
 show_waveforms = Peeker.to_wavedrom
 show_text_table = Peeker.to_text_table
 show_html_table = Peeker.to_html_table
+export_dataframe = Peeker.to_dataframe
 
 
 def wavejson_to_wavedrom(wavejson, width=None, skin='default'):

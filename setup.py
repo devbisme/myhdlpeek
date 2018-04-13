@@ -48,7 +48,7 @@ setup(
     author_email= email,
     url='https://github.com/xesscorp/myhdlpeek',
 #    packages=['myhdlpeek',],
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     entry_points={'console_scripts':['myhdlpeek = myhdlpeek.__main__:main']},
     package_dir={'myhdlpeek': 'myhdlpeek'},
     include_package_data=True,

@@ -31,6 +31,7 @@ requirements = [
     'future >= 0.15.0',
     'myhdl',
     'tabulate',
+    'pandas',
 ]
 
 test_requirements = [

@@ -387,7 +387,7 @@ def traces_to_dataframe(*traces, **kwargs):
             A Pandas dataframe of sample times and values for a set of traces.
     '''
 
-    # Remove all the non-traces.
+    # Extract all the traces and ignore all the non-traces.
     traces = [t for t in traces if isinstance(t, Trace)]
 
     # Set the time boundaries for the DataFrame.
@@ -432,7 +432,7 @@ def traces_to_table_data(*traces, **kwargs):
             Table data and a list of headers for table columns.
     '''
 
-    # Remove all the non-traces.
+    # Extract all the traces and ignore all the non-traces.
     traces = [t for t in traces if isinstance(t, Trace)]
 
     # Set the time boundaries for the DataFrame.

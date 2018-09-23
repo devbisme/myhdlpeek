@@ -32,6 +32,7 @@ requirements = [
     'myhdl',
     'tabulate',
     'pandas',
+    'nbwavedrom'
 ]
 
 test_requirements = [

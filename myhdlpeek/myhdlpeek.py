@@ -62,6 +62,9 @@ DEBUG_OVERVIEW = logging.DEBUG
 DEBUG_DETAILED = logging.DEBUG - 1
 DEBUG_OBSESSIVE = logging.DEBUG - 2
 
+# Set this flag to False if using the older Jupyter notebook.
+USE_JUPYTERLAB = True
+
 # Waveform samples consist of a time and a value.
 Sample = namedtuple('Sample', 'time value')
 
@@ -755,38 +758,12 @@ class Peeker(object):
         width = kwargs.get('width')
         skin = kwargs.get('skin', 'default')
 
-        wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width, skin=skin)
-        
-    @classmethod
-    def to_nbwavedrom(cls, *names, **kwargs):
-        '''
-        Display waveforms stored in peekers in Jupyter notebook.
-
-        Args:
-            *names: A list of strings containing the names for the Peekers that
-                will be displayed. A string may contain multiple,
-                space-separated names.
-
-        Keywords Args:
-            start_time: The earliest (left-most) time bound for the waveform display.
-            stop_time: The latest (right-most) time bound for the waveform display.
-            title: String containing the title placed across the top of the display.
-            caption: String containing the title placed across the bottom of the display.
-            tick: If true, times are shown at the tick marks of the display.
-            tock: If true, times are shown between the tick marks of the display.
-            width: The width of the waveform display in pixels.
-            skin: Selects the set of graphic elements used to create waveforms.
-
-        Returns:
-            Nothing.
-        '''
-
-        # Handle keyword args explicitly for Python 2 compatibility.
-        width = kwargs.get('width')
-        skin = kwargs.get('skin', 'default')
-
-        #wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width, skin=skin)
-        return nbwavedrom.draw(cls.to_wavejson(*names, **kwargs))
+        if USE_JUPYTERLAB:
+            # Supports the new Jupyter Lab.
+            return nbwavedrom.draw(cls.to_wavejson(*names, **kwargs))
+        else:
+            # Used with older Jupyter notebooks.
+            wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width, skin=skin)
 
     @classmethod
     def to_dataframe(cls, *names, **kwargs):

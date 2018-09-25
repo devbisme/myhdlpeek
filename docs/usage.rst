@@ -15,3 +15,10 @@ link to see what myhdlpeek can do.
 * Trigger functions: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_triggers.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_triggers.html>`_
 * Peeker groups: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_groups.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_groups.html>`_
 * Pandas export: `[Notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_dataframe.ipynb>`_ `[HTML] <http://www.xess.com/static/media/pages/peeker_dataframe.html>`_
+
+Also, by default myhdlpeek is set up to work with the newer JupyterLab.
+If you want to use it in an older Jupyter notebook, then do the following::
+
+    import myhdlpeek
+    myhdlpeek.USE_JUPYTERLAB = False
+

@@ -4,6 +4,13 @@ History
 -------
 
 
+0.0.8 (2018-09-25)
+______________________
+
+* Now works with the newer JupyterLab by default. Older Jupyter notebooks are still supported by setting ``myhdlpeek.USE_JUPYTERLAB = False``.
+* Updated documentation.
+
+
 0.0.7 (2018-04-13)
 ______________________
 

@@ -25,7 +25,7 @@ Unfortunately, the Github Notebook viewer doesn't render the waveform displays
 so you'll have to download and run the notebooks locally or click on the static HTML
 link to see what myhdlpeek can do.
 
-* Simple multiplexer: `[Notebook1] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_ `[HTML1] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.html>`_
+* Simple multiplexer: `[Notebook1] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_ `[HTML1] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_simple_mux.html>`_
 * Hierarchical adder: `[Notebook2] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_ `[HTML2] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.html>`_
 * Other Peeker options: `[Notebook3] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_ `[HTML3] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.html>`_
 * Tabular display: `[Notebook4] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_tables.ipynb>`_ `[HTML4] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_tables.html>`_

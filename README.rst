@@ -26,13 +26,13 @@ so you'll have to download and run the notebooks locally or click on the static 
 link to see what myhdlpeek can do.
 
 * Simple multiplexer: `[Notebook1] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_simple_mux.ipynb>`_ `[HTML1] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_simple_mux.html>`_
-* Hierarchical adder: `[Notebook2] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_ `[HTML2] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.html>`_
-* Other Peeker options: `[Notebook3] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_ `[HTML3] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.html>`_
-* Tabular display: `[Notebook4] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_tables.ipynb>`_ `[HTML4] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_tables.html>`_
-* Convenience functions: `[Notebook5] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_convenience_functions.ipynb>`_ `[HTML5] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_convenience_functions.html>`_
-* Trigger functions: `[Notebook6] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_triggers.ipynb>`_ `[HTML6] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_triggers.html>`_
-* Peeker groups: `[Notebook7] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_groups.ipynb>`_ `[HTML7] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_groups.html>`_
-* Pandas export: `[Notebook8] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_dataframe.ipynb>`_ `[HTML8] <http://htmlpreview.github.io/?https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_dataframe.html>`_
+* Hierarchical adder: `[Notebook2] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_hier_add.ipynb>`_ `[HTML2] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_hier_add.html>`_
+* Other Peeker options: `[Notebook3] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_options.ipynb>`_ `[HTML3] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_options.html>`_
+* Tabular display: `[Notebook4] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_tables.ipynb>`_ `[HTML4] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_tables.html>`_
+* Convenience functions: `[Notebook5] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_convenience_functions.ipynb>`_ `[HTML5] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_convenience_functions.html>`_
+* Trigger functions: `[Notebook6] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_triggers.ipynb>`_ `[HTML6] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_triggers.html>`_
+* Peeker groups: `[Notebook7] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_groups.ipynb>`_ `[HTML7] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_groups.html>`_
+* Pandas export: `[Notebook8] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/peeker_dataframe.ipynb>`_ `[HTML8] <https://xess.com/myhdlpeek/docs/_build/singlehtml/notebooks/peeker_dataframe.html>`_
 
 |
 

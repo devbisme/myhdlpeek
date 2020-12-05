@@ -707,17 +707,25 @@ def traces_to_matplotlib(*traces, **kwargs):
     # Plot each trace waveform.
     for i, (trace, axis) in enumerate(zip(traces, axes), 1):
 
-        # Leave a blank space for non-traces.
-        if not trace:
-            continue
-
         # Set position of trace within stacked traces.
         axis.set_position([0.1, (num_traces - i) * trace_hgt_pctg, 0.8, trace_hgt_pctg])
 
         # Place grid on X axis.
         axis.grid(axis="x", color="orange", alpha=1.0)
 
-        trace.to_matplotlib(axis, start_time, stop_time)
+        if not trace:
+            # Leave a blank space for non-traces.
+            # Remove ticks from Y axis.
+            axis.set_yticks([])
+            axis.tick_params(axis="y", length=0, which="both")
+
+            # Remove the box around the subplot.
+            axis.spines["left"].set_visible(False)
+            axis.spines["right"].set_visible(False)
+            axis.spines["top"].set_visible(False)
+            axis.spines["bottom"].set_visible(False)
+        else:
+            trace.to_matplotlib(axis, start_time, stop_time)
 
 
 def traces_to_wavejson(*traces, **kwargs):
@@ -928,12 +936,17 @@ class Peeker(object):
         """
 
         index_re = "\[\d+\]$"
+        cleaned_peekers = dict()
         for name, peeker in cls._peekers.items():
-            if not peeker.name_dup:
+            if peeker.name_dup:
+                # Repeated name so keep index to disambiguate.
+                cleaned_peekers[name] = peeker
+            else:
+                # Name is not repeated, so remove index.
                 new_name = re.sub(index_re, "", name)
-                if new_name != name:
-                    peeker.trace.name = new_name
-                    cls._peekers[new_name] = cls._peekers.pop(name)
+                peeker.trace.name = new_name
+                cleaned_peekers[new_name] = peeker
+        cls._peekers = cleaned_peekers
 
     @classmethod
     def to_dataframe(cls, *names, **kwargs):
@@ -1405,9 +1418,11 @@ def setup(use_wavedrom=False, use_jupyter=True):
     global show_traces
     if use_wavedrom:
         Peeker.show_waveforms = Peeker.to_wavedrom
+        PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
         show_traces = traces_to_wavedrom
     else:
         Peeker.show_waveforms = Peeker.to_matplotlib
+        PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
         show_traces = traces_to_matplotlib
     USE_JUPYTERLAB = not use_jupyter
 

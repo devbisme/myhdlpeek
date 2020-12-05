@@ -22,62 +22,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import division
-from __future__ import absolute_import
-from builtins import super
-from builtins import int
-from builtins import dict
-from builtins import str
-from future import standard_library
-standard_library.install_aliases()
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
-import re
+import json
+import logging
+import math
 import operator
+import re
+import sys
+from builtins import dict, int, str, super
 from collections import namedtuple
 from copy import copy, deepcopy
-import logging
-
-import pandas as pd
-import matplotlib.pyplot as plt
-
-from myhdl import Signal, always_comb, intbv, now, SignalType, EnumItemType
-from myhdl._compat import integer_types
-from myhdl.conversion import _toVerilog
-from myhdl.conversion import _toVHDL
-
-from tabulate import tabulate
 
 import IPython.display as DISP
-import json
+import matplotlib.pyplot as plt
 import nbwavedrom
+import pandas as pd
+from future import standard_library
+from myhdl import EnumItemType, Signal, SignalType, always_comb, intbv, now
+from myhdl._compat import integer_types
+from myhdl.conversion import _toVerilog, _toVHDL
+from tabulate import tabulate
 
-logger = logging.getLogger('myhdlpeek')
+standard_library.install_aliases()
 
-USING_PYTHON2 = (sys.version_info.major == 2)
-USING_PYTHON3 = not USING_PYTHON2
-
-DEBUG_OVERVIEW = logging.DEBUG
-DEBUG_DETAILED = logging.DEBUG - 1
-DEBUG_OBSESSIVE = logging.DEBUG - 2
 
 # Set this flag to False if using the older Jupyter notebook.
 USE_JUPYTERLAB = True
 
-# Set this flag to use wavedrom. Otherwise, matplotlib is used.
-USE_WAVEDROM = False
-
 # Waveform samples consist of a time and a value.
-Sample = namedtuple('Sample', 'time value')
+Sample = namedtuple("Sample", "time value")
 
 
 class Trace(list):
-    '''
+    """
     Trace objects are lists that store a sequence of samples. The samples
     should be arranged in order of ascending sample time.
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,24 +66,24 @@ class Trace(list):
         self.num_bits = 0
 
     def store_sample(self, value):
-        '''Store a value and the current time into the trace.'''
+        """Store a value and the current time into the trace."""
         self.append(Sample(now(), copy(value)))
 
     def insert_sample(self, sample):
-        '''Insert a sample into the correct position within a trace'''
+        """Insert a sample into the correct position within a trace"""
         index = self.get_index(sample.time)
         self.insert(index, sample)
 
     def start_time(self):
-        '''Return the time of the first sample in the trace.'''
+        """Return the time of the first sample in the trace."""
         return self[0].time
 
     def stop_time(self):
-        '''Return the time of the last sample in the trace.'''
+        """Return the time of the last sample in the trace."""
         return self[-1].time
 
     def get_index(self, time):
-        '''Return the position to insert a sample with the given time.'''
+        """Return the position to insert a sample with the given time."""
 
         for i, sample in enumerate(self):
             # Return the index of the 1st sample with a time GREATER than the
@@ -115,29 +96,31 @@ class Trace(list):
         return len(self)
 
     def get_value(self, time):
-        '''Get the trace value at an arbitrary time.'''
+        """Get the trace value at an arbitrary time."""
 
         # Return the signal value immediately BEFORE the insertion index.
-        val = self[max(0, self.get_index(time)-1)].value
+        val = self[max(0, self.get_index(time) - 1)].value
         if isinstance(val, EnumItemType):
             return val
         return int(val)
 
     def get_sample_times(self, **kwargs):
-        '''Return list of times at which the trace was sampled.'''
-        start_time = kwargs.pop('start_time', self.start_time())
-        stop_time = kwargs.pop('stop_time', self.stop_time())
-        return [sample.time for sample in self if start_time <= sample.time <= stop_time]
+        """Return list of times at which the trace was sampled."""
+        start_time = kwargs.pop("start_time", self.start_time())
+        stop_time = kwargs.pop("stop_time", self.stop_time())
+        return [
+            sample.time for sample in self if start_time <= sample.time <= stop_time
+        ]
 
     def delay(self, delta):
-        '''Return the trace data shifted in time by delta units.'''
-        delayed_trace = Trace([Sample(t+delta, v) for t, v in self])
+        """Return the trace data shifted in time by delta units."""
+        delayed_trace = Trace([Sample(t + delta, v) for t, v in self])
         delayed_trace.name = self.name
         delayed_trace.num_bits = self.num_bits
         return delayed_trace
 
     def extend_duration(self, start_time, end_time):
-        '''Extend the duration of a trace.'''
+        """Extend the duration of a trace."""
         # Extend the trace data to start_time unless the trace data already precedes that.
         if start_time < self[0].time:
             self.insert(0, Sample(start_time, self[0].value))
@@ -146,7 +129,7 @@ class Trace(list):
             self.append(Sample(end_time, self[-1].value))
 
     def remove_repeats(self):
-        '''Return a trace without samples having the same sampling time.'''
+        """Return a trace without samples having the same sampling time."""
         trace = copy(self)
         trace.clear()
 
@@ -160,51 +143,53 @@ class Trace(list):
         return trace
 
     def interpolate(self, times):
-        '''Insert interpolated values at the times in the given list.'''
+        """Insert interpolated values at the times in the given list."""
         for time in times:
             insert_sample(Sample(self.get_value(time), time))
 
     def add_rise_fall(self, delta):
-        '''Add rise/fall time to trace transitions.'''
+        """Add rise/fall time to trace transitions."""
         trace = self.remove_repeats()
         prev_sample = trace[0]
         for sample in trace[1:]:
-            trace.insert_sample(Sample(sample.time-delta, prev_sample.value))
+            trace.insert_sample(Sample(sample.time - delta, prev_sample.value))
             prev_sample = sample
         return trace
 
     def add_slope(self):
-        '''Return a trace with slope added to trace transitions.'''
+        """Return a trace with slope added to trace transitions."""
         return self.add_rise_fall(0.2).delay(0.1)
 
     def binarize(self):
-        '''Return trace of sample values set to 1 (if true) or 0 (if false).'''
+        """Return trace of sample values set to 1 (if true) or 0 (if false)."""
         return Trace([Sample(t, (v and 1) or 0) for t, v in self])
 
     def toggles(self):
-        '''Return a binary trace that toggles wherever the source trace changes values.'''
+        """Return a binary trace that toggles wherever the source trace changes values."""
         toggle_trace = copy(self)
         toggle_trace.clear()
-        toggle_trace.append(Sample(self[0].time,1))  # Define starting point.
+        toggle_trace.append(Sample(self[0].time, 1))  # Define starting point.
         for sample in self.anyedge():
             if sample.value:
                 tgl_val = toggle_trace[-1].value
                 tgl_val = (not tgl_val and 1) or 0
                 toggle_trace.append(Sample(sample.time, tgl_val))
-        toggle_trace.append(Sample(self[-1].time, toggle_trace[-1].value))  # Define ending point.
+        toggle_trace.append(
+            Sample(self[-1].time, toggle_trace[-1].value)
+        )  # Define ending point.
         toggle_trace.num_bits = 1
         return toggle_trace
 
     def apply_op1(self, op_func):
-        '''Return trace generated by applying the operator function to all the sample values in the trace.'''
+        """Return trace generated by applying the operator function to all the sample values in the trace."""
         return Trace([Sample(t, op_func(v)) for t, v in self])
 
     def apply_op2(self, trc, op_func):
-        '''Return trace generated by applying the operator function to two traces.'''
+        """Return trace generated by applying the operator function to two traces."""
 
         # If the function input is a constant, then make a trace from it.
-        if isinstance(trc, (int,float)):
-            trc = Trace([Sample(0,trc)])
+        if isinstance(trc, (int, float)):
+            trc = Trace([Sample(0, trc)])
 
         # If the function input is a Peeker, then get the trace contained in the Peeker.
         elif isinstance(trc, Peeker):
@@ -212,7 +197,9 @@ class Trace(list):
 
         # Abort if operating on something that's not a Trace.
         if not isinstance(trc, Trace):
-            raise Exception("Trace can only be combined with another Trace or a number.")
+            raise Exception(
+                "Trace can only be combined with another Trace or a number."
+            )
 
         # Make copies of the traces since they will be altered.
         trc1 = copy(self)
@@ -250,7 +237,7 @@ class Trace(list):
 
             # Looped through all samples if each index is pointing to the
             # last sample in their traces.
-            if indx1 == len(trc1)-1 and indx2 == len(trc2)-1:
+            if indx1 == len(trc1) - 1 and indx2 == len(trc2) - 1:
                 break
 
             # Move to next sample after the current time. (Might need to
@@ -345,40 +332,40 @@ class Trace(list):
         return ((~self) & self.delay(1)).binarize()
 
     def trig_times(self):
-        '''Return list of times trace value is true (non-zero).'''
+        """Return list of times trace value is true (non-zero)."""
         return [sample.time for sample in self if sample.value]
 
     def to_matplotlib(self, subplot, start_time, stop_time):
-        '''Fill a matplotlib subplot for a trace between the start & stop times.'''
-        
+        """Fill a matplotlib subplot for a trace between the start & stop times."""
+
         # Set the X axis limits.
-        subplot.set_xlim(start_time, stop_time)
+        subplot.set_xlim(start_time, stop_time + 0.005)
 
         # Set the Y axis limits.
         subplot.set_ylim(-0.2, 1.2)
 
         # Set the Y axis label position for each plot trace.
-        ylbl_position = dict(rotation=0,
-                                horizontalalignment='right',
-                                verticalalignment='center',
-                                x=-0.01)
+        ylbl_position = dict(
+            rotation=0, horizontalalignment="right", verticalalignment="center", x=-0.01
+        )
         subplot.set_ylabel(self.name, ylbl_position)
 
         # Remove ticks from Y axis.
         subplot.set_yticks([])
+        subplot.tick_params(axis="y", length=0, which="both")
 
         # Remove the box around the subplot.
-        subplot.spines['left'].set_visible(False)
-        subplot.spines['right'].set_visible(False)
-        subplot.spines['top'].set_visible(False)
-        subplot.spines['bottom'].set_visible(False)
+        subplot.spines["left"].set_visible(False)
+        subplot.spines["right"].set_visible(False)
+        subplot.spines["top"].set_visible(False)
+        subplot.spines["bottom"].set_visible(False)
 
         # Insert samples for beginning/end times into a copy of the trace data.
         trace = copy(self)
-        trace.insert_sample(
-            Sample(start_time, self.get_value(start_time)))
-        trace.insert_sample(
-            Sample(stop_time, self.get_value(stop_time)))
+        start = math.floor(start_time)
+        stop = math.ceil(stop_time)
+        trace.insert_sample(Sample(start, self.get_value(start)))
+        trace.insert_sample(Sample(stop, self.get_value(stop)))
 
         # Remove samples having the same sample time, leaving only one.
         trace = trace.remove_repeats()
@@ -394,11 +381,26 @@ class Trace(list):
             time0 = tgl_trace[0].time
             for tgl in tgl_trace[1:]:
                 time1 = tgl.time
-                val = str(self.get_value(time0))
-                text_x = (time1 + time0)/2
+                if time0 < start_time:
+                    time0 = start_time
+                if time1 <= time0:
+                    time0 = time1
+                    continue
+                if time1 > stop_time:
+                    time1 = stop_time
+                val = str(trace.get_value(time0))
+                text_x = (time1 + time0) / 2
                 text_y = 0.5
-                subplot.text(text_x, text_y, val, horizontalalignment='center', verticalalignment='center')
+                subplot.text(
+                    text_x,
+                    text_y,
+                    val,
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                )
                 time0 = time1
+                if time0 >= stop_time:
+                    break
 
             # Slope the transitions of the trace waveform.
             tgl_trace = tgl_trace.add_slope()
@@ -413,7 +415,7 @@ class Trace(list):
             y.append(y[-1])
             y_bar = [sample.value for sample in bar_trace]
             y_bar.append(y_bar[-1])
-            subplot.plot(x, y, 'tab:blue', x, y_bar, 'tab:blue')
+            subplot.plot(x, y, "tab:blue", x, y_bar, "tab:blue")
 
         else:
             # Binary trace.
@@ -422,13 +424,13 @@ class Trace(list):
             x.append(trace[-1].time)
             y = [sample.value for sample in trace]
             y.append(y[-1])
-            subplot.plot(x, y, 'tab:blue')
+            subplot.plot(x, y, "tab:blue")
 
     def to_wavejson(self, start_time, stop_time):
-        '''Generate the WaveJSON data for a trace between the start & stop times.'''
+        """Generate the WaveJSON data for a trace between the start & stop times."""
 
         has_samples = False  # No samples currently on the wave.
-        wave_str = ''  # No samples, so wave string is empty.
+        wave_str = ""  # No samples, so wave string is empty.
         wave_data = list()  # No samples, so wave data values are empty.
         prev_time = start_time  # Set time of previous sample to the wave starting time.
         prev_val = None  # Value of previous sample starts at non-number.
@@ -439,10 +441,8 @@ class Trace(list):
         # Insert samples into a copy of the waveform data. These samples bound
         # the beginning and ending times of the waveform.
         bounded_samples = copy(self)
-        bounded_samples.insert_sample(
-            Sample(start_time, self.get_value(start_time)))
-        bounded_samples.insert_sample(
-            Sample(stop_time, self.get_value(stop_time)))
+        bounded_samples.insert_sample(Sample(start_time, self.get_value(start_time)))
+        bounded_samples.insert_sample(Sample(stop_time, self.get_value(stop_time)))
 
         # Create the waveform by processing the waveform data.
         for time, val in bounded_samples:
@@ -462,10 +462,7 @@ class Trace(list):
                 has_samples, wave_str, wave_data, prev_time, prev_val = prev
 
             # Save the current waveform in case a back-up is needed.
-            prev = [
-                has_samples, wave_str,
-                copy(wave_data), prev_time, prev_val
-            ]
+            prev = [has_samples, wave_str, copy(wave_data), prev_time, prev_val]
 
             # If the current sample occurred after the desired time window,
             # then just extend the previous sample up to the end of the window.
@@ -474,21 +471,21 @@ class Trace(list):
                 time = stop_time  # Extend it to the end of the window.
 
             # Replicate the sample's previous value up to the current time.
-            wave_str += '.' * (time - prev_time - 1)
+            wave_str += "." * (time - prev_time - 1)
 
             # Add the current sample's value to the waveform.
 
             if has_samples and (val == prev_val):
                 # Just extend the previous sample if the current sample has the same value.
-                wave_str += '.'
+                wave_str += "."
             else:
                 # Otherwise, add a new sample value.
                 if isinstance(val, EnumItemType):
-                    wave_str += '='
+                    wave_str += "="
                     wave_data.append(str(val))
                 elif self.num_bits > 1:
                     # Value will be shown in a data "envelope".
-                    wave_str += '='
+                    wave_str += "="
                     wave_data.append(str(val))
                 else:
                     # Binary (hi/lo) waveform.
@@ -500,38 +497,46 @@ class Trace(list):
 
         # Return a dictionary with the wave in a format that WaveDrom understands.
         wave = dict()
-        wave['name'] = self.name
-        wave['wave'] = wave_str
+        wave["name"] = self.name
+        wave["wave"] = wave_str
         if wave_data:
-            wave['data'] = wave_data
+            wave["data"] = wave_data
         return wave
 
+
 def _get_sample_times(*traces, **kwargs):
-    '''Get sample times for all the traces.'''
+    """Get sample times for all the traces."""
 
     # Set the time boundaries for the DataFrame.
-    max_stop_time = max([trace.stop_time() for trace in traces if isinstance(trace, Trace)])
-    stop_time = kwargs.pop('stop_time', max_stop_time)
-    min_start_time = min([trace.start_time() for trace in traces if isinstance(trace, Trace)])
-    start_time = kwargs.pop('start_time', min_start_time)
+    max_stop_time = max(
+        [trace.stop_time() for trace in traces if isinstance(trace, Trace)]
+    )
+    stop_time = kwargs.pop("stop_time", max_stop_time)
+    min_start_time = min(
+        [trace.start_time() for trace in traces if isinstance(trace, Trace)]
+    )
+    start_time = kwargs.pop("start_time", min_start_time)
 
     # Get all the sample times of all the traces between the start and stop times.
     times = set([start_time, stop_time])
     for trace in traces:
-        times.update(set(trace.get_sample_times(start_time=start_time, stop_time=stop_time)))
+        times.update(
+            set(trace.get_sample_times(start_time=start_time, stop_time=stop_time))
+        )
 
     # If requested, fill in additional times between sample times.
-    step = kwargs.pop('step', 0)
+    step = kwargs.pop("step", 0)
     if step:
-        times.update(set(range(start_time, stop_time+1, step)))
+        times.update(set(range(start_time, stop_time + 1, step)))
 
     # Sort sample times in increasing order.
     times = sorted(list(times))
 
     return times
 
+
 def traces_to_dataframe(*traces, **kwargs):
-    '''
+    """
     Create Pandas dataframe of sample times and values for a set of traces.
 
         Args:
@@ -546,7 +551,7 @@ def traces_to_dataframe(*traces, **kwargs):
 
         Returns:
             A Pandas dataframe of sample times and values for a set of traces.
-    '''
+    """
 
     # Extract all the traces and ignore all the non-traces.
     traces = [t for t in traces if isinstance(t, Trace)]
@@ -558,10 +563,11 @@ def traces_to_dataframe(*traces, **kwargs):
     trace_data = {tr.name: [tr.get_value(t) for t in times] for tr in traces}
 
     # Return a DataFrame where each column is a trace and time is the index.
-    return pd.DataFrame(trace_data, index = times)
+    return pd.DataFrame(trace_data, index=times)
+
 
 def traces_to_table_data(*traces, **kwargs):
-    '''
+    """
     Create table of sample times and values for a set of traces.
 
         Args:
@@ -576,7 +582,7 @@ def traces_to_table_data(*traces, **kwargs):
 
         Returns:
             Table data and a list of headers for table columns.
-    '''
+    """
 
     # Extract all the traces and ignore all the non-traces.
     traces = [t for t in traces if isinstance(t, Trace)]
@@ -591,78 +597,131 @@ def traces_to_table_data(*traces, **kwargs):
         row = [trace.get_value(time) for trace in traces]
         row.insert(0, time)
         table_data.append(row)
-    headers = ['Time'] + [trace.name for trace in traces]
+    headers = ["Time"] + [trace.name for trace in traces]
     return table_data, headers
 
+
 def traces_to_table(*traces, **kwargs):
-    if 'format' in kwargs:
-        format = kwargs['format']
+    if "format" in kwargs:
+        format = kwargs["format"]
     else:
-        format = 'simple'
+        format = "simple"
     table_data, headers = traces_to_table_data(*traces, **kwargs)
     return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)
 
+
 def traces_to_text_table(*traces, **kwargs):
-    if 'format' not in kwargs:
-        kwargs['format'] = 'simple'
+    if "format" not in kwargs:
+        kwargs["format"] = "simple"
     print(traces_to_table(*traces, **kwargs))
 
+
 def traces_to_html_table(*traces, **kwargs):
-    kwargs['format'] = 'html'
+    kwargs["format"] = "html"
     tbl_html = traces_to_table(*traces, **kwargs)
 
     # Generate the HTML from the JSON.
     DISP.display_html(DISP.HTML(tbl_html))
 
+
 def _interpolate_traces(*traces, times):
-    '''Interpolate trace values at times in the given list.'''
+    """Interpolate trace values at times in the given list."""
 
     for trace in traces:
         trace.interpolate(times)
 
+
 def traces_to_matplotlib(*traces, **kwargs):
     """
-    Plot traces as a stack of individual waveforms.
+    Display waveforms stored in peekers in Jupyter notebook using matplotlib.
     
-    Args:
-        traces: 
+        Args:
+            *traces: A list of traces to convert into matplotlib for display.
+                Can also contain None which will create a blank trace.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the waveform display.
+            stop_time: The latest (right-most) time bound for the waveform display.
+            title: String containing the title placed across the top of the display.
+            caption: String containing the title placed across the bottom of the display.
+            tick: If true, times are shown at the tick marks of the display.
+            tock: If true, times are shown between the tick marks of the display.
+            width: The width of the waveform display in inches.
+            height: The height of the waveform display in inches.
+
+        Returns:
+            Nothing.
     """
+
+    num_traces = len(traces)
+    trace_hgt = 0.5  # Default trace height in inches.
+    cycle_wid = 0.5  # Default unit cycle width in inches.
+
     # Handle keyword args explicitly for Python 2 compatibility.
-    tock = kwargs.get('tock', False)
-    tick = kwargs.get('tick', False)
-    caption = kwargs.get('caption')
-    title = kwargs.get('title')
-    start_time = kwargs.get('start_time', min([trace.start_time() for trace in traces if isinstance(trace, Trace)]))
-    stop_time = kwargs.get('stop_time', max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]))
-    stop_time += 1.01
+    tock = kwargs.get("tock", False)
+    tick = kwargs.get("tick", False)
+    caption = kwargs.get("caption", "")
+    title = kwargs.get("title", "")
+    start_time = kwargs.get(
+        "start_time",
+        min([trace.start_time() for trace in traces if isinstance(trace, Trace)]),
+    )
+    stop_time = kwargs.get(
+        "stop_time",
+        max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]),
+    )
+    width = kwargs.get("width", (stop_time - start_time) * cycle_wid)
+    height = kwargs.get("height", num_traces * trace_hgt)
 
     # Create separate plot traces for each selected waveform.
-    num_traces = len(traces)
-    trace_hgt = 1.0 / num_traces
-    fig, axes = plt.subplots(nrows=num_traces, sharex=True, squeeze=False,
-                               subplot_kw=None, gridspec_kw=None)
-    axes = axes[:,0]
+    trace_hgt_pctg = 1.0 / num_traces
+    fig, axes = plt.subplots(
+        nrows=num_traces,
+        sharex=True,
+        squeeze=False,
+        subplot_kw=None,
+        gridspec_kw=None,
+        figsize=(width, height),
+    )
+    axes = axes[:, 0]  # Collapse 2D matrix of subplots into a 1D list.
 
-    # Set the X axis label on the bottom-most trace.
-    xlabel = "Cycle"
-    axes[-1].set_xlabel(xlabel)
-    # axes[-1].set_xticklabels([])
-    axes[-1].tick_params(axis='x', length=0)
-    
+    # Set the caption on the X-axis label on the bottom-most trace.
+    axes[-1].set_xlabel(caption)
+
+    # Set the title for the collection of traces on the top-most trace.
+    axes[0].set_title(title)
+
+    # Set X-axis ticks at the bottom of the stack of traces.
+    start = math.floor(start_time)
+    stop = math.ceil(stop_time)
+    axes[-1].tick_params(axis="x", length=0, which="both")  # No tick marks.
+    # Set positions of tick marks so grid lines will work.
+    axes[-1].set_xticks(range(start, stop + 1), minor=False)
+    axes[-1].set_xticks([x + 0.5 for x in range(start, stop)], minor=True)
+    # Place cycle times at tick marks or between them.
+    if not tick:
+        axes[-1].set_xticklabels([], minor=False)
+    if tock:
+        axes[-1].set_xticklabels([str(x) for x in range(start, stop)], minor=True)
+
     # Plot each trace waveform.
     for i, (trace, axis) in enumerate(zip(traces, axes), 1):
 
+        # Leave a blank space for non-traces.
+        if not trace:
+            continue
+
         # Set position of trace within stacked traces.
-        axis.set_position([0.1, (num_traces-i) * trace_hgt, 0.8, trace_hgt])
-        
+        axis.set_position([0.1, (num_traces - i) * trace_hgt_pctg, 0.8, trace_hgt_pctg])
+
         # Place grid on X axis.
-        axis.grid(axis='x', color='orange', alpha=1.0)
+        axis.grid(axis="x", color="orange", alpha=1.0)
 
         trace.to_matplotlib(axis, start_time, stop_time)
 
 
 def traces_to_wavejson(*traces, **kwargs):
-    '''
+    """
     Convert traces into a WaveJSON data structure.
 
     Args:
@@ -679,64 +738,66 @@ def traces_to_wavejson(*traces, **kwargs):
 
     Returns:
         A dictionary with the JSON data for the waveforms.
-    '''
+    """
 
     # Handle keyword args explicitly for Python 2 compatibility.
-    tock = kwargs.get('tock', False)
-    tick = kwargs.get('tick', False)
-    caption = kwargs.get('caption')
-    title = kwargs.get('title')
-    stop_time = kwargs.get('stop_time', max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]))
-    start_time = kwargs.get('start_time', min([trace.start_time() for trace in traces if isinstance(trace, Trace)]))
+    tock = kwargs.get("tock", False)
+    tick = kwargs.get("tick", False)
+    caption = kwargs.get("caption")
+    title = kwargs.get("title")
+    stop_time = kwargs.get(
+        "stop_time",
+        max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]),
+    )
+    start_time = kwargs.get(
+        "start_time",
+        min([trace.start_time() for trace in traces if isinstance(trace, Trace)]),
+    )
 
     wavejson = dict()
-    wavejson['signal'] = list()
+    wavejson["signal"] = list()
     for trace in traces:
         if isinstance(trace, Trace):
-            wavejson['signal'].append(trace.to_wavejson(start_time, stop_time))
+            wavejson["signal"].append(trace.to_wavejson(start_time, stop_time))
         else:
             # Insert an empty dictionary to create a blank line.
-            wavejson['signal'].append(dict())
+            wavejson["signal"].append(dict())
 
     # Create a header for the set of waveforms.
     if title or tick or tock:
         head = dict()
         if title:
-            head['text'] = [
-                'tspan', [
-                    'tspan', {
-                        'fill': 'blue',
-                        'font-size': '16',
-                        'font-weight': 'bold'
-                    }, title
-                ]
+            head["text"] = [
+                "tspan",
+                [
+                    "tspan",
+                    {"fill": "blue", "font-size": "16", "font-weight": "bold"},
+                    title,
+                ],
             ]
         if tick:
-            head['tick'] = start_time
+            head["tick"] = start_time
         if tock:
-            head['tock'] = start_time
-        wavejson['head'] = head
+            head["tock"] = start_time
+        wavejson["head"] = head
 
     # Create a footer for the set of waveforms.
     if caption or tick or tock:
         foot = dict()
         if caption:
-            foot['text'] = [
-                'tspan', ['tspan', {
-                    'font-style': 'italic'
-                }, caption]
-            ]
+            foot["text"] = ["tspan", ["tspan", {"font-style": "italic"}, caption]]
         if tick:
-            foot['tick'] = start_time
+            foot["tick"] = start_time
         if tock:
-            foot['tock'] = start_time
-        wavejson['foot'] = foot
+            foot["tock"] = start_time
+        wavejson["foot"] = foot
 
     return wavejson
 
+
 def traces_to_wavedrom(*traces, **kwargs):
-    '''
-    Display waveforms stored in peekers in Jupyter notebook.
+    """
+    Display waveforms stored in peekers in Jupyter notebook using wavedrom.
 
     Args:
         *traces: A list of traces to convert into WaveJSON for display.
@@ -752,11 +813,14 @@ def traces_to_wavedrom(*traces, **kwargs):
 
     Returns:
         Nothing.
-    '''
+    """
 
-    wavejson_to_wavedrom(traces_to_wavejson(*traces, **kwargs),
-                         width=kwargs.get('width'),
-                         skin=kwargs.get('skin','default'))
+    wavejson_to_wavedrom(
+        traces_to_wavejson(*traces, **kwargs),
+        width=kwargs.get("width"),
+        skin=kwargs.get("skin", "default"),
+    )
+
 
 class Peeker(object):
     _peekers = dict()  # Global list of all Peekers.
@@ -770,8 +834,9 @@ class Peeker(object):
         else:
             # Check to see if a signal is being monitored.
             if not isinstance(signal, SignalType):
-                raise Exception("Can't add Peeker {name} to a non-Signal!".
-                                format(name=name))
+                raise Exception(
+                    "Can't add Peeker {name} to a non-Signal!".format(name=name)
+                )
 
             # Create storage for signal trace.
             self.trace = Trace()
@@ -780,7 +845,8 @@ class Peeker(object):
             @always_comb
             def peeker_logic():
                 self.trace.store_sample(
-                    signal.val)  # Store signal value and sim timestamp.
+                    signal.val
+                )  # Store signal value and sim timestamp.
 
             # Instantiate the peeker module.
             self.instance = peeker_logic
@@ -788,8 +854,9 @@ class Peeker(object):
             # Assign a unique name to this peeker.
             self.name_dup = False  # Start off assuming the name has no duplicates.
             index = 0  # Starting index for disambiguating duplicates.
-            nm = '{name}[{index}]'.format(
-                **locals())  # Create name with bracketed index.
+            nm = "{name}[{index}]".format(
+                **locals()
+            )  # Create name with bracketed index.
             # Search through the peeker names for a match.
             while nm in self._peekers:
                 # A match was found, so mark the matching names as duplicates.
@@ -797,7 +864,7 @@ class Peeker(object):
                 self.name_dup = True
                 # Go to the next index and see if that name is taken.
                 index += 1
-                nm = '{name}[{index}]'.format(**locals())
+                nm = "{name}[{index}]".format(**locals())
             self.trace.name = nm  # Assign the unique name.
 
             # Set the width of the signal.
@@ -807,7 +874,9 @@ class Peeker(object):
                     if isinstance(signal.val, bool):
                         self.trace.num_bits = 1
                     elif isinstance(signal.val, integer_types):
-                        self.trace.num_bits = 32  # Gotta pick some width for integers. This sounds good.
+                        self.trace.num_bits = (
+                            32  # Gotta pick some width for integers. This sounds good.
+                        )
                     else:
                         self.trace.num_bits = 32  # Unknown type of value. Just give it this width and hope.
 
@@ -819,56 +888,56 @@ class Peeker(object):
 
     @classmethod
     def clear(cls):
-        '''Clear the global list of Peekers.'''
+        """Clear the global list of Peekers."""
         cls._peekers = dict()
 
     @classmethod
     def clear_traces(cls):
-        '''Clear waveform samples from the global list of Peekers.'''
+        """Clear waveform samples from the global list of Peekers."""
         for p in cls._peekers.values():
             p.trace.clear()
 
     @classmethod
     def instances(cls):
-        '''Return a list of all the instantiated Peeker modules.'''
+        """Return a list of all the instantiated Peeker modules."""
         return (p.instance for p in cls.peekers())
 
     @classmethod
     def peekers(cls):
-        '''Return a list of all the Peekers.'''
+        """Return a list of all the Peekers."""
         return cls._peekers.values()
 
     @classmethod
     def start_time(cls):
-        '''Return the time of the first signal transition captured by the peekers.'''
+        """Return the time of the first signal transition captured by the peekers."""
         return min((p.trace.start_time() for p in cls.peekers()))
 
     @classmethod
     def stop_time(cls):
-        '''Return the time of the last signal transition captured by the peekers.'''
+        """Return the time of the last signal transition captured by the peekers."""
         return max((p.trace.stop_time() for p in cls.peekers()))
 
     @classmethod
     def _clean_names(cls):
-        '''
+        """
         Remove indices from non-repeated peeker names that don't need them.
 
         When created, all peekers get an index appended to their name to
         disambiguate any repeated names. If the name isn't actually repeated,
         then the index is removed.
-        '''
+        """
 
-        index_re = '\[\d+\]$'
+        index_re = "\[\d+\]$"
         for name, peeker in cls._peekers.items():
             if not peeker.name_dup:
-                new_name = re.sub(index_re, '', name)
+                new_name = re.sub(index_re, "", name)
                 if new_name != name:
                     peeker.trace.name = new_name
                     cls._peekers[new_name] = cls._peekers.pop(name)
 
     @classmethod
     def to_dataframe(cls, *names, **kwargs):
-        '''
+        """
         Convert traces stored in peekers into a Pandas DataFrame of times and trace values.
 
         Args:
@@ -884,7 +953,7 @@ class Peeker(object):
 
         Returns:
             A DataFrame with the columns for the named traces and time as the index.
-        '''
+        """
 
         cls._clean_names()
 
@@ -897,13 +966,13 @@ class Peeker(object):
             names = _sort_names(cls._peekers.keys())
 
         # Collect all the traces for the Peekers matching the names.
-        traces = [getattr(cls._peekers.get(name), 'trace', None) for name in names]
+        traces = [getattr(cls._peekers.get(name), "trace", None) for name in names]
 
         return traces_to_dataframe(*traces, **kwargs)
 
     @classmethod
     def to_table_data(cls, *names, **kwargs):
-        '''
+        """
         Convert traces stored in peekers into a list of times and trace values.
 
         Args:
@@ -919,7 +988,7 @@ class Peeker(object):
 
         Returns:
             List of lists containing the time and the value of each trace at that time.
-        '''
+        """
 
         cls._clean_names()
 
@@ -932,25 +1001,25 @@ class Peeker(object):
             names = _sort_names(cls._peekers.keys())
 
         # Collect all the traces for the Peekers matching the names.
-        traces = [getattr(cls._peekers.get(name), 'trace', None) for name in names]
+        traces = [getattr(cls._peekers.get(name), "trace", None) for name in names]
 
         return traces_to_table_data(*traces, **kwargs)
 
     @classmethod
     def to_table(cls, *names, **kwargs):
-        format = kwargs.pop('format', 'simple')
+        format = kwargs.pop("format", "simple")
         table_data, headers = cls.to_table_data(*names, **kwargs)
         return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)
 
     @classmethod
     def to_text_table(cls, *names, **kwargs):
-        if 'format' not in kwargs:
-            kwargs['format'] = 'simple'
+        if "format" not in kwargs:
+            kwargs["format"] = "simple"
         print(cls.to_table(*names, **kwargs))
 
     @classmethod
     def to_html_table(cls, *names, **kwargs):
-        kwargs['format'] = 'html'
+        kwargs["format"] = "html"
         tbl_html = cls.to_table(*names, **kwargs)
 
         # Generate the HTML from the JSON.
@@ -958,6 +1027,27 @@ class Peeker(object):
 
     @classmethod
     def to_matplotlib(cls, *names, **kwargs):
+        """
+        Convert waveforms stored in peekers into a matplotlib plot.
+
+        Args:
+            *names: A list of strings containing the names for the Peekers that
+                will be displayed. A string may contain multiple,
+                space-separated names.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the waveform display.
+            stop_time: The latest (right-most) time bound for the waveform display.
+            title: String containing the title placed across the top of the display.
+            caption: String containing the title placed across the bottom of the display.
+            tick: If true, times are shown at the tick marks of the display.
+            tock: If true, times are shown between the tick marks of the display.
+            width: The width of the waveform display in inches.
+            height: The height of the waveform display in inches.
+
+        Returns:
+            Nothing.
+        """
 
         cls._clean_names()
 
@@ -971,12 +1061,12 @@ class Peeker(object):
 
         # Collect all the Peekers matching the names.
         peekers = [cls._peekers.get(name) for name in names]
-        traces = [getattr(p, 'trace', None) for p in peekers]
-        return traces_to_matplotlib(*traces, **kwargs)
+        traces = [getattr(p, "trace", None) for p in peekers]
+        traces_to_matplotlib(*traces, **kwargs)
 
     @classmethod
     def to_wavejson(cls, *names, **kwargs):
-        '''
+        """
         Convert waveforms stored in peekers into a WaveJSON data structure.
 
         Args:
@@ -994,7 +1084,7 @@ class Peeker(object):
 
         Returns:
             A dictionary with the JSON data for the waveforms.
-        '''
+        """
 
         cls._clean_names()
 
@@ -1008,12 +1098,12 @@ class Peeker(object):
 
         # Collect all the Peekers matching the names.
         peekers = [cls._peekers.get(name) for name in names]
-        traces = [getattr(p, 'trace', None) for p in peekers]
+        traces = [getattr(p, "trace", None) for p in peekers]
         return traces_to_wavejson(*traces, **kwargs)
 
     @classmethod
     def to_wavedrom(cls, *names, **kwargs):
-        '''
+        """
         Display waveforms stored in peekers in Jupyter notebook.
 
         Args:
@@ -1033,25 +1123,27 @@ class Peeker(object):
 
         Returns:
             Nothing.
-        '''
+        """
 
         # Handle keyword args explicitly for Python 2 compatibility.
-        width = kwargs.get('width')
-        skin = kwargs.get('skin', 'default')
+        width = kwargs.get("width")
+        skin = kwargs.get("skin", "default")
 
         if USE_JUPYTERLAB:
             # Supports the new Jupyter Lab.
             return nbwavedrom.draw(cls.to_wavejson(*names, **kwargs))
         else:
             # Used with older Jupyter notebooks.
-            wavejson_to_wavedrom(cls.to_wavejson(*names, **kwargs), width=width, skin=skin)
-        
+            wavejson_to_wavedrom(
+                cls.to_wavejson(*names, **kwargs), width=width, skin=skin
+            )
+
     def delay(self, delta):
-        '''Return the trace data shifted in time by delta units.'''
+        """Return the trace data shifted in time by delta units."""
         return self.trace.delay(delta)
 
     def binarize(self):
-        '''Return trace of sample values set to 1 (if true) or 0 (if false).'''
+        """Return trace of sample values set to 1 (if true) or 0 (if false)."""
         return self.trace.binarize()
 
     def __eq__(self, pkr):
@@ -1124,12 +1216,11 @@ class Peeker(object):
         return abs(self.trace)
 
     def trig_times(self):
-        '''Return list of times trace value is true (non-zero).'''
+        """Return list of times trace value is true (non-zero)."""
         return self.trace.trig_times()
 
 
 class PeekerGroup(dict):
-
     def __init__(self, **kwargs):
         super().__init__()
         for name, signal in kwargs.items():
@@ -1139,7 +1230,7 @@ class PeekerGroup(dict):
 
     def to_table(self, *names, **kwargs):
 
-        format = kwargs.get('format', 'simple')
+        format = kwargs.get("format", "simple")
 
         if names:
             # Go through the provided names and split any containing spaces
@@ -1155,18 +1246,39 @@ class PeekerGroup(dict):
         return Peeker.to_table(*peeker_names, **kwargs)
 
     def to_text_table(self, *names, **kwargs):
-        if 'format' not in kwargs:
-            kwargs['format'] = 'simple'
+        if "format" not in kwargs:
+            kwargs["format"] = "simple"
         print(self.to_table(*names, **kwargs))
 
     def to_html_table(self, *names, **kwargs):
-        kwargs['format'] = 'html'
+        kwargs["format"] = "html"
         tbl_html = self.to_table(*names, **kwargs)
 
         # Generate the HTML from the JSON.
         DISP.display_html(DISP.HTML(tbl_html))
 
     def to_matplotlib(self, *names, **kwargs):
+        """
+        Display waveforms stored in peekers in Jupyter notebook.
+
+        Args:
+            *names: A list of strings containing the names for the Peekers that
+                will be displayed. A string may contain multiple,
+                space-separated names.
+
+        Keywords Args:
+            start_time: The earliest (left-most) time bound for the waveform display.
+            stop_time: The latest (right-most) time bound for the waveform display.
+            title: String containing the title placed across the top of the display.
+            caption: String containing the caption placed across the bottom of the display.
+            tick: If true, times are shown at the tick marks of the display.
+            tock: If true, times are shown between the tick marks of the display.
+            width: The width of the waveform display in inches.
+            height: The height of the waveform display in inches.
+
+        Returns:
+            Nothing.
+        """
 
         if names:
             # Go through the provided names and split any containing spaces
@@ -1181,7 +1293,7 @@ class PeekerGroup(dict):
         Peeker.to_matplotlib(*peeker_names, **kwargs)
 
     def to_wavedrom(self, *names, **kwargs):
-        '''
+        """
         Display waveforms stored in peekers in Jupyter notebook.
 
         Args:
@@ -1193,14 +1305,14 @@ class PeekerGroup(dict):
             start_time: The earliest (left-most) time bound for the waveform display.
             stop_time: The latest (right-most) time bound for the waveform display.
             title: String containing the title placed across the top of the display.
-            caption: String containing the title placed across the bottom of the display.
+            caption: String containing the caption placed across the bottom of the display.
             tick: If true, times are shown at the tick marks of the display.
             tock: If true, times are shown between the tick marks of the display.
             width: The width of the waveform display in pixels.
 
         Returns:
             Nothing.
-        '''
+        """
 
         if names:
             # Go through the provided names and split any containing spaces
@@ -1213,21 +1325,10 @@ class PeekerGroup(dict):
         Peeker._clean_names()
         peeker_names = [self[n].trace.name for n in names]
         Peeker.to_wavedrom(*peeker_names, **kwargs)
-        
-
-# Convenience functions.
-clear_traces = Peeker.clear_traces
-export_dataframe = Peeker.to_dataframe
-show_text_table = Peeker.to_text_table
-show_html_table = Peeker.to_html_table
-if USE_WAVEDROM:
-    show_waveforms = Peeker.to_wavedrom
-else:
-    show_waveforms = Peeker.to_matplotlib
 
 
-def wavejson_to_wavedrom(wavejson, width=None, skin='default'):
-    '''
+def wavejson_to_wavedrom(wavejson, width=None, skin="default"):
+    """
     Create WaveDrom display from WaveJSON data.
 
     This code is from https://github.com/witchard/ipython-wavedrom.
@@ -1238,58 +1339,84 @@ def wavejson_to_wavedrom(wavejson, width=None, skin='default'):
              this, set width to a large value. The display will then become scrollable.
       skin:  Selects the set of graphic elements used to draw the waveforms.
              Allowable values are 'default' and 'narrow'.
-    '''
+    """
 
     # Set the width of the waveform display.
-    style = ''
+    style = ""
     if width != None:
         style = ' style="width: {w}px"'.format(w=str(int(width)))
 
     # Generate the HTML from the JSON.
     htmldata = '<div{style}><script type="WaveDrom">{json}</script></div>'.format(
-        style=style, json=json.dumps(wavejson))
+        style=style, json=json.dumps(wavejson)
+    )
     DISP.display_html(DISP.HTML(htmldata))
 
     # Trigger the WaveDrom Javascript that creates the graphical display.
     DISP.display_javascript(
         DISP.Javascript(
-            data='WaveDrom.ProcessAll();',
+            data="WaveDrom.ProcessAll();",
             lib=[
-                'http://wavedrom.com/wavedrom.min.js',
-                'http://wavedrom.com/skins/{skin}.js'.format(skin=skin)
-            ]))
+                "http://wavedrom.com/wavedrom.min.js",
+                "http://wavedrom.com/skins/{skin}.js".format(skin=skin),
+            ],
+        )
+    )
 
     # The following allows the display of WaveDROM in the HTML files generated by nbconvert.
     # It's disabled because it makes Github's nbconvert freak out.
-    setup = '''
+    setup = """
 <script src="http://wavedrom.com/skins/{skin}.js" type="text/javascript"></script>
 <script src="http://wavedrom.com/wavedrom.min.js" type="text/javascript"></script>
 <body onload="WaveDrom.ProcessAll()">
-    '''.format(skin=skin)
-    #DISP.display_html(DISP.HTML(setup))
+    """.format(
+        skin=skin
+    )
+    # DISP.display_html(DISP.HTML(setup))
 
 
 def _sort_names(names):
-    '''
+    """
     Sort peeker names by index and alphabetically.
 
     For example, the peeker names would be sorted as a[0], b[0], a[1], b[1], ...
-    '''
+    """
 
     def index_key(lbl):
-        '''Index sorting.'''
-        m = re.match('.*\[(\d+)\]$', lbl)  # Get the bracketed index.
+        """Index sorting."""
+        m = re.match(".*\[(\d+)\]$", lbl)  # Get the bracketed index.
         if m:
             return int(m.group(1))  # Return the index as an integer.
         return -1  # No index found so it comes before everything else.
 
     def name_key(lbl):
-        '''Name sorting.'''
-        m = re.match('^([^\[]+)', lbl)  # Get name preceding bracketed index.
+        """Name sorting."""
+        m = re.match("^([^\[]+)", lbl)  # Get name preceding bracketed index.
         if m:
             return m.group(1)  # Return name.
-        return ''  # No name found.
+        return ""  # No name found.
 
     srt_names = sorted(names, key=name_key)
     srt_names = sorted(srt_names, key=index_key)
     return srt_names
+
+
+def setup(use_wavedrom=False, use_jupyter=True):
+    global show_traces
+    if use_wavedrom:
+        Peeker.show_waveforms = Peeker.to_wavedrom
+        show_traces = traces_to_wavedrom
+    else:
+        Peeker.show_waveforms = Peeker.to_matplotlib
+        show_traces = traces_to_matplotlib
+    USE_JUPYTERLAB = not use_jupyter
+
+
+
+# Convenience functions.
+setup()
+clear_traces = Peeker.clear_traces
+export_dataframe = Peeker.to_dataframe
+show_text_table = Peeker.to_text_table
+show_html_table = Peeker.to_html_table
+show_waveforms = Peeker.show_waveforms

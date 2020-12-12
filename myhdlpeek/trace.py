@@ -88,13 +88,7 @@ class Trace(list):
         """Get the trace value at an arbitrary time."""
 
         # Return the signal value immediately BEFORE the insertion index.
-        val = self[max(0, self.get_index(time) - 1)].value
-        try:
-            return int(val)
-        except ValueError:
-            # Signal value is not an integer or boolean so it's
-            # probably an enumeration for a state variable.
-            return val
+        return self[max(0, self.get_index(time) - 1)].value
 
     def get_sample_times(self, **kwargs):
         """Return list of times at which the trace was sampled."""
@@ -166,9 +160,8 @@ class Trace(list):
                 tgl_val = toggle_trace[-1].value
                 tgl_val = (not tgl_val and 1) or 0
                 toggle_trace.append(Sample(sample.time, tgl_val))
-        toggle_trace.append(
-            Sample(self[-1].time, toggle_trace[-1].value)
-        )  # Define ending point.
+        # Define ending point.
+        toggle_trace.append(Sample(self[-1].time, toggle_trace[-1].value))
         toggle_trace.num_bits = 1
         return toggle_trace
 
@@ -222,10 +215,10 @@ class Trace(list):
             t2, v2 = trc2[indx2]
             if t1 <= t2:
                 curr_time = t1
-                v2 = trc2.get_value(curr_time)
             else:
                 curr_time = t2
-                v1 = trc1.get_value(curr_time)
+            v2 = trc2.get_value(curr_time)
+            v1 = trc1.get_value(curr_time)
 
             # Combine the trace values using the operator.
             res_trc_val = op_func(v1, v2)
@@ -239,7 +232,7 @@ class Trace(list):
                 break
 
             # Move to next sample after the current time. (Might need to
-            # increment both traces if they both had samples at the curren time.)
+            # increment both traces if they both had samples at the current time.)
             if t1 == curr_time:
                 indx1 += 1
             if t2 == curr_time:

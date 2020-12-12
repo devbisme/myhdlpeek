@@ -92,7 +92,11 @@ class Peeker(object):
             self.trace.name = nm  # Assign the unique name.
 
             # Set the width of the signal.
-            if not isinstance(signal.val, EnumItemType):
+            if isinstance(signal.val, EnumItemType):
+                # For enums, set the width to always be greater than 1 so the
+                # trace displays as bus packets and not a binary waveform.
+                self.trace.num_bits = max(2, signal._nrbits)
+            else:
                 self.trace.num_bits = signal._nrbits
                 if self.trace.num_bits == 0:
                     if isinstance(signal.val, bool):

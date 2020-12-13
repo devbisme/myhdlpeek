@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .myhdlpeek import *
+from .trace import *
+from .peekerbase import *
 from .pckg_info import version

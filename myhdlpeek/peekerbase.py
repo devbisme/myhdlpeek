@@ -33,9 +33,9 @@ import IPython.display as DISP
 import matplotlib.pyplot as plt
 import nbwavedrom
 from future import standard_library
-from myhdl import EnumItemType, SignalType, always_comb, now
-from myhdl._compat import integer_types
-from myhdl.conversion import _toVerilog, _toVHDL
+# from myhdl import EnumItemType, SignalType, always_comb, now
+# from myhdl._compat import integer_types
+# from myhdl.conversion import _toVerilog, _toVHDL
 from tabulate import tabulate
 
 from .trace import *
@@ -47,72 +47,11 @@ standard_library.install_aliases()
 USE_JUPYTERLAB = True
 
 
-class Peeker(object):
+class PeekerBase(object):
     _peekers = dict()  # Global list of all Peekers.
 
     def __init__(self, signal, name):
-
-        if _toVerilog._converting or _toVHDL._converting:
-            # Don't create a peeker when converting to VHDL or Verilog.
-            pass
-
-        else:
-            # Check to see if a signal is being monitored.
-            if not isinstance(signal, SignalType):
-                raise Exception(
-                    "Can't add Peeker {name} to a non-Signal!".format(name=name)
-                )
-
-            # Create storage for signal trace.
-            self.trace = Trace()
-
-            # Create combinational module that triggers when signal changes.
-            @always_comb
-            def peeker_logic():
-                # Store signal value and sim timestamp.
-                self.trace.store_sample(signal.val, now())
-
-            # Instantiate the peeker module.
-            self.instance = peeker_logic
-
-            # Assign a unique name to this peeker.
-            self.name_dup = False  # Start off assuming the name has no duplicates.
-            index = 0  # Starting index for disambiguating duplicates.
-            nm = "{name}[{index}]".format(
-                **locals()
-            )  # Create name with bracketed index.
-            # Search through the peeker names for a match.
-            while nm in self._peekers:
-                # A match was found, so mark the matching names as duplicates.
-                self._peekers[nm].name_dup = True
-                self.name_dup = True
-                # Go to the next index and see if that name is taken.
-                index += 1
-                nm = "{name}[{index}]".format(**locals())
-            self.trace.name = nm  # Assign the unique name.
-
-            # Set the width of the signal.
-            if isinstance(signal.val, EnumItemType):
-                # For enums, set the width to always be greater than 1 so the
-                # trace displays as bus packets and not a binary waveform.
-                self.trace.num_bits = max(2, signal._nrbits)
-            else:
-                self.trace.num_bits = signal._nrbits
-                if self.trace.num_bits == 0:
-                    if isinstance(signal.val, bool):
-                        self.trace.num_bits = 1
-                    elif isinstance(signal.val, integer_types):
-                        # Gotta pick some width for integers. This sounds good.
-                        self.trace.num_bits = 32
-                    else:
-                        # Unknown type of value. Just give it this width and hope.
-                        self.trace.num_bits = 32
-
-            # Keep a reference to the signal so we can get info about it later, if needed.
-            self.signal = signal
-
-            # Add this peeker to the global list.
-            self._peekers[self.trace.name] = self
+        pass
 
     @classmethod
     def clear(cls):
@@ -128,7 +67,8 @@ class Peeker(object):
     @classmethod
     def instances(cls):
         """Return a list of all the instantiated Peeker modules."""
-        return (p.instance for p in cls.peekers())
+        return [p.instance for p in cls.peekers()]
+        # return (p.instance for p in cls.peekers())
 
     @classmethod
     def peekers(cls):
@@ -156,17 +96,23 @@ class Peeker(object):
         """
 
         index_re = "\[\d+\]$"
+        rmv_keys = []
         cleaned_peekers = dict()
         for name, peeker in cls._peekers.items():
             if peeker.name_dup:
                 # Repeated name so keep index to disambiguate.
-                cleaned_peekers[name] = peeker
+                # cleaned_peekers[name] = peeker
+                pass
             else:
                 # Name is not repeated, so remove index.
+                rmv_keys.append(name)
                 new_name = re.sub(index_re, "", name)
                 peeker.trace.name = new_name
                 cleaned_peekers[new_name] = peeker
-        cls._peekers = cleaned_peekers
+        cls._peekers.update(cleaned_peekers)
+        for key in rmv_keys:
+            cls._peekers.pop(key)
+
 
     @classmethod
     def to_dataframe(cls, *names, **kwargs):
@@ -473,10 +419,10 @@ class PeekerGroup(dict):
             # If no names provided, use all the peekers in this group.
             names = self.keys()
 
-        Peeker._clean_names()
+        PeekerBase._clean_names()
         peeker_names = [self[n].trace.name for n in names]
 
-        return Peeker.to_table(*peeker_names, **kwargs)
+        return PeekerBase.to_table(*peeker_names, **kwargs)
 
     def to_text_table(self, *names, **kwargs):
         if "format" not in kwargs:
@@ -521,9 +467,9 @@ class PeekerGroup(dict):
             # If no names provided, use all the peekers in this group.
             names = self.keys()
 
-        Peeker._clean_names()
+        PeekerBase._clean_names()
         peeker_names = [self[n].trace.name for n in names]
-        Peeker.to_matplotlib(*peeker_names, **kwargs)
+        PeekerBase.to_matplotlib(*peeker_names, **kwargs)
 
     def to_wavedrom(self, *names, **kwargs):
         """
@@ -555,9 +501,9 @@ class PeekerGroup(dict):
             # If no names provided, use all the peekers in this group.
             names = self.keys()
 
-        Peeker._clean_names()
+        PeekerBase._clean_names()
         peeker_names = [self[n].trace.name for n in names]
-        Peeker.to_wavedrom(*peeker_names, **kwargs)
+        PeekerBase.to_wavedrom(*peeker_names, **kwargs)
 
 
 def wavejson_to_wavedrom(wavejson, width=None, skin="default"):
@@ -632,26 +578,3 @@ def _sort_names(names):
     srt_names = sorted(names, key=name_key)
     srt_names = sorted(srt_names, key=index_key)
     return srt_names
-
-
-def setup(use_wavedrom=False, use_jupyter=True):
-    global show_traces
-    if use_wavedrom:
-        Peeker.show_waveforms = Peeker.to_wavedrom
-        PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
-        show_traces = traces_to_wavedrom
-    else:
-        Peeker.show_waveforms = Peeker.to_matplotlib
-        PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
-        show_traces = traces_to_matplotlib
-    USE_JUPYTERLAB = not use_jupyter
-
-
-
-# Convenience functions.
-setup()
-clear_traces = Peeker.clear_traces
-export_dataframe = Peeker.to_dataframe
-show_text_table = Peeker.to_text_table
-show_html_table = Peeker.to_html_table
-show_waveforms = Peeker.show_waveforms

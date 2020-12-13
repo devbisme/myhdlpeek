@@ -50,6 +50,12 @@ USE_JUPYTERLAB = True
 class PeekerBase(object):
     _peekers = dict()  # Global list of all Peekers.
 
+    def __new__(cls, *args, **kwargs):
+        # Keep PeekerBase from being instantiated.
+        if cls is PeekerBase:
+            raise TypeError("PeekerBase class may not be instantiated")
+        return object.__new__(cls)
+
     def __init__(self, signal, name):
         pass
 

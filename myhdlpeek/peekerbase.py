@@ -34,9 +34,6 @@ import matplotlib.pyplot as plt
 import nbwavedrom
 from future import standard_library
 
-# from myhdl import EnumItemType, SignalType, always_comb, now
-# from myhdl._compat import integer_types
-# from myhdl.conversion import _toVerilog, _toVHDL
 from tabulate import tabulate
 
 from .trace import *
@@ -586,22 +583,22 @@ def _sort_names(names):
     return srt_names
 
 
-def setupbase(use_wavedrom=False, use_jupyter=True, cls=None):
+def setup(cls, use_wavedrom=False, use_jupyter=True):
     """Setup options and shortcut functions."""
 
-    global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
-    global USE_JUPYTERLAB
+    global USE_JUPYTERLAB, clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
 
     if use_wavedrom:
         cls.show_waveforms = cls.to_wavedrom
         # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
-        show_traces = traces_to_wavedrom
+        cls.show_traces = traces_to_wavedrom
     else:
         cls.show_waveforms = cls.to_matplotlib
         # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
-        show_traces = traces_to_matplotlib
+        cls.show_traces = traces_to_matplotlib
 
     clear_traces = cls.clear_traces
+    show_traces = cls.show_traces
     export_dataframe = cls.to_dataframe
     show_text_table = cls.to_text_table
     show_html_table = cls.to_html_table

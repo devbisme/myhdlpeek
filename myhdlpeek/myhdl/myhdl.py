@@ -32,6 +32,7 @@ from myhdl import EnumItemType, SignalType, always_comb, now
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL
 
+# from .. import peekerbase
 from ..peekerbase import *
 
 standard_library.install_aliases()
@@ -103,8 +104,3 @@ class Peeker(PeekerBase):
 
             # Add this peeker to the global list.
             self._peekers[self.trace.name] = self
-
-
-setup = functools.partial(setupbase, cls=Peeker)
-
-setup()

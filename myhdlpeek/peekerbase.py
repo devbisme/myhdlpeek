@@ -584,3 +584,27 @@ def _sort_names(names):
     srt_names = sorted(names, key=name_key)
     srt_names = sorted(srt_names, key=index_key)
     return srt_names
+
+
+def setupbase(use_wavedrom=False, use_jupyter=True, cls=None):
+    """Setup options and shortcut functions."""
+
+    global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
+    global USE_JUPYTERLAB
+
+    if use_wavedrom:
+        cls.show_waveforms = cls.to_wavedrom
+        # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
+        show_traces = traces_to_wavedrom
+    else:
+        cls.show_waveforms = cls.to_matplotlib
+        # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
+        show_traces = traces_to_matplotlib
+
+    clear_traces = cls.clear_traces
+    export_dataframe = cls.to_dataframe
+    show_text_table = cls.to_text_table
+    show_html_table = cls.to_html_table
+    show_waveforms = cls.show_waveforms
+
+    USE_JUPYTERLAB = not use_jupyter

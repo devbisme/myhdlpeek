@@ -27,6 +27,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from builtins import dict, int, str, super
 
 from future import standard_library
+import functools
 from myhdl import EnumItemType, SignalType, always_comb, now
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL
@@ -35,8 +36,8 @@ from ..peekerbase import *
 
 standard_library.install_aliases()
 
-class Peeker(PeekerBase):
 
+class Peeker(PeekerBase):
     def __init__(self, signal, name):
 
         super().__init__(signal, name)
@@ -104,26 +105,6 @@ class Peeker(PeekerBase):
             self._peekers[self.trace.name] = self
 
 
-def setup(use_wavedrom=False, use_jupyter=True):
-    global show_traces
-    global USE_JUPYTERLAB
+setup = functools.partial(setupbase, cls=Peeker)
 
-    if use_wavedrom:
-        Peeker.show_waveforms = Peeker.to_wavedrom
-        # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
-        show_traces = traces_to_wavedrom
-    else:
-        Peeker.show_waveforms = Peeker.to_matplotlib
-        # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
-        show_traces = traces_to_matplotlib
-    USE_JUPYTERLAB = not use_jupyter
-
-
-
-# Convenience functions.
 setup()
-clear_traces = Peeker.clear_traces
-export_dataframe = Peeker.to_dataframe
-show_text_table = Peeker.to_text_table
-show_html_table = Peeker.to_html_table
-show_waveforms = Peeker.show_waveforms

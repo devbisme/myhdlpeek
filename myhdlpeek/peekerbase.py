@@ -33,6 +33,7 @@ import IPython.display as DISP
 import matplotlib.pyplot as plt
 import nbwavedrom
 from future import standard_library
+
 # from myhdl import EnumItemType, SignalType, always_comb, now
 # from myhdl._compat import integer_types
 # from myhdl.conversion import _toVerilog, _toVHDL
@@ -118,7 +119,6 @@ class PeekerBase(object):
         cls._peekers.update(cleaned_peekers)
         for key in rmv_keys:
             cls._peekers.pop(key)
-
 
     @classmethod
     def to_dataframe(cls, *names, **kwargs):

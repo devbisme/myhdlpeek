@@ -24,10 +24,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import functools
 from builtins import dict, int, str, super
 
 from future import standard_library
-import functools
 from myhdl import EnumItemType, SignalType, always_comb, now
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL

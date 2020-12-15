@@ -1,5 +1,5 @@
 from ..peekerbase import setup
-from .myhdl import Peeker
+from .peeker import Peeker
 setup(cls=Peeker)
 
 from ..trace import *

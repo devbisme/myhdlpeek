@@ -306,7 +306,7 @@ class PeekerBase(object):
         Returns:
             Nothing.
         """
-
+        breakpoint()
         # Handle keyword args explicitly for Python 2 compatibility.
         width = kwargs.get("width")
         skin = kwargs.get("skin", "default")
@@ -586,7 +586,7 @@ def _sort_names(names):
 def setup(cls, use_wavedrom=False, use_jupyter=True):
     """Setup options and shortcut functions."""
 
-    global USE_JUPYTERLAB, clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
+    global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
 
     if use_wavedrom:
         cls.show_waveforms = cls.to_wavedrom
@@ -597,11 +597,23 @@ def setup(cls, use_wavedrom=False, use_jupyter=True):
         # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
         cls.show_traces = traces_to_matplotlib
 
+    # Create a trivial function to call cls.show_waveforms and assign it to show_waveforms.
+    # Then if cls.show_waveforms is changed, the show_waveforms call will change with it
+    # instead of retaining the old function.
+    def shw_wvfrms(*args, **kwargs):
+        cls.show_waveforms(*args, **kwargs)
+    show_waveforms = shw_wvfrms
+
+    def shw_trcs(*args, **kwargs):
+        cls.show_traces(*args, **kwargs)
+    show_traces = shw_trcs
+
+    # These class methods don't change as the options are altered, so just assign them
+    # to shortcuts without creating trivial functions like above.
     clear_traces = cls.clear_traces
-    show_traces = cls.show_traces
     export_dataframe = cls.to_dataframe
     show_text_table = cls.to_text_table
     show_html_table = cls.to_html_table
-    show_waveforms = cls.show_waveforms
 
+    global USE_JUPYTERLAB
     USE_JUPYTERLAB = not use_jupyter

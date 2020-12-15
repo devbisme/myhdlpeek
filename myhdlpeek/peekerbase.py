@@ -286,7 +286,7 @@ class PeekerBase(object):
         Returns:
             Nothing.
         """
-        breakpoint()
+
         # Handle keyword args explicitly for Python 2 compatibility.
         width = kwargs.get("width")
         skin = kwargs.get("skin", "default")

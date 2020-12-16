@@ -524,9 +524,11 @@ def setup(cls, use_wavedrom=False, use_jupyter=True):
         # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
         cls.show_traces = traces_to_matplotlib
 
-    # Create a trivial function to call cls.show_waveforms and assign it to show_waveforms.
-    # Then if cls.show_waveforms is changed, the show_waveforms call will change with it
-    # instead of retaining the old function.
+    # Create an intermediary function to call cls.show_waveforms and assign it to show_waveforms.
+    # Then if cls.show_waveforms is changed, any calls to show_waveforms will call the changed 
+    # function. Directly assigning cls.show_waveforms to show_waveforms would mean any external
+    # code that calls show_waveforms() would always call the initially-assigned function even if
+    # cls.show_waveforms got a different assignment later.
     def shw_wvfrms(*args, **kwargs):
         cls.show_waveforms(*args, **kwargs)
     show_waveforms = shw_wvfrms
@@ -536,7 +538,7 @@ def setup(cls, use_wavedrom=False, use_jupyter=True):
     show_traces = shw_trcs
 
     # These class methods don't change as the options are altered, so just assign them
-    # to shortcuts without creating trivial functions like above.
+    # to shortcuts without creating intermediary functions like above.
     clear_traces = cls.clear_traces
     export_dataframe = cls.to_dataframe
     show_text_table = cls.to_text_table

@@ -8,29 +8,25 @@ import functools
 from builtins import dict, int, str, super
 
 from future import standard_library
+from nmigen.sim import Tick
 
-# from .. import peekerbase
 from ..peekerbase import *
 
 standard_library.install_aliases()
 
 
 class Peeker(PeekerBase):
-    def __init__(self, signal, name):
+
+    def __init__(self, signal, name=None):
+
+        # Get the name from the signal if it's not explicitly given.
+        if not name:
+            name = signal.name
 
         super().__init__(signal, name)
 
         # Create storage for signal trace.
         self.trace = Trace()
-
-        # Create combinational module that triggers when signal changes.
-        @always_comb
-        def peeker_logic():
-            # Store signal value and sim timestamp.
-            self.trace.store_sample(signal.val, now())
-
-        # Instantiate the peeker module.
-        self.instance = peeker_logic
 
         # Assign a unique name to this peeker.
         self.name_dup = False  # Start off assuming the name has no duplicates.
@@ -49,24 +45,22 @@ class Peeker(PeekerBase):
         self.trace.name = nm  # Assign the unique name.
 
         # Set the width of the signal.
-        if isinstance(signal.val, EnumItemType):
-            # For enums, set the width to always be greater than 1 so the
-            # trace displays as bus packets and not a binary waveform.
-            self.trace.num_bits = max(2, signal._nrbits)
-        else:
-            self.trace.num_bits = signal._nrbits
-            if self.trace.num_bits == 0:
-                if isinstance(signal.val, bool):
-                    self.trace.num_bits = 1
-                elif isinstance(signal.val, integer_types):
-                    # Gotta pick some width for integers. This sounds good.
-                    self.trace.num_bits = 32
-                else:
-                    # Unknown type of value. Just give it this width and hope.
-                    self.trace.num_bits = 32
+        self.trace.num_bits = len(signal)
 
         # Keep a reference to the signal so we can get info about it later, if needed.
         self.signal = signal
 
         # Add this peeker to the global list.
         self._peekers[self.trace.name] = self
+
+    @classmethod
+    def assign_simulator(cls, simulator):
+        """Assign nmigen Simulator to all Peekers."""
+
+        def peek_process():
+            while True:
+                for peeker in cls.peekers():
+                    peeker.trace.store_sample((yield peeker.signal), simulator._engine.now)
+                yield Tick()
+
+        simulator.add_process(peek_process)

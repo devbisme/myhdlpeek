@@ -35,7 +35,31 @@ class PeekerBase(object):
         return object.__new__(cls)
 
     def __init__(self, signal, name):
-        pass
+
+        # Create storage for signal trace.
+        self.trace = Trace()
+
+        # Assign a unique name to this peeker.
+        self.name_dup = False  # Start off assuming the name has no duplicates.
+        index = 0  # Starting index for disambiguating duplicates.
+        nm = "{name}[{index}]".format(
+            **locals()
+        )  # Create name with bracketed index.
+        # Search through the peeker names for a match.
+        while nm in self._peekers:
+            # A match was found, so mark the matching names as duplicates.
+            self._peekers[nm].name_dup = True
+            self.name_dup = True
+            # Go to the next index and see if that name is taken.
+            index += 1
+            nm = "{name}[{index}]".format(**locals())
+        self.trace.name = nm  # Assign the unique name.
+
+        # Keep a reference to the signal so we can get info about it later, if needed.
+        self.signal = signal
+
+        # Add this peeker to the global list.
+        self._peekers[self.trace.name] = self
 
     @classmethod
     def clear(cls):
@@ -47,12 +71,6 @@ class PeekerBase(object):
         """Clear waveform samples from the global list of Peekers."""
         for p in cls._peekers.values():
             p.trace.clear()
-
-    @classmethod
-    def instances(cls):
-        """Return a list of all the instantiated Peeker modules."""
-        return [p.instance for p in cls.peekers()]
-        # return (p.instance for p in cls.peekers())
 
     @classmethod
     def peekers(cls):

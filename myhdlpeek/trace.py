@@ -96,18 +96,38 @@ class Trace(list):
             self.append(Sample(end_time, self[-1].value))
 
     def remove_repeats(self):
-        """Return a trace without samples having the same sampling time."""
-        trace = copy(self)
-        trace.clear()
+        """Return a trace with only one sample per sampling time (no repeated sampling times)."""
 
-        # Build the trace backwards, starting from the oldest sample.
-        # Skip any sample having a time >= the most recently accepted sample.
-        trace.append(self[-1])
-        for sample in self[-1::-1]:
-            if sample.time < trace[0].time:
-                trace.insert(0, sample)
+        def remove_time_repeats(trc):
+            trace = copy(trc)
+            trace.clear()
 
-        return trace
+            # Build the trace backwards, starting from the newest sample.
+            # Accept only samples having a time < the most recently accepted sample.
+            trace.append(trc[-1])
+            for sample in trc[-1::-1]:
+                if sample.time < trace[0].time:
+                    trace.insert(0, sample)
+
+            return trace
+
+        def remove_value_repeats(trc):
+            trace = copy(trc)
+            trace.clear()
+
+            # Build the trace forwards, removing any samples with the same
+            # value as the previous sample.
+            trace.append(trc[0])
+            for sample in trc[1:]:
+                if sample.value != trace[-1].value:
+                    # print(f"appending {trace[-1]}, {sample}")
+                    trace.append(sample)
+                # else:
+                    # print(f"skipping {trace[-1]}, {sample}")
+
+            return trace
+
+        return remove_value_repeats(remove_time_repeats(self))
 
     def interpolate(self, times):
         """Insert interpolated values at the times in the given list."""

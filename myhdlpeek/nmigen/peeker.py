@@ -15,7 +15,6 @@ standard_library.install_aliases()
 
 
 class Peeker(PeekerBase):
-
     def __init__(self, signal, name=None):
 
         # Get the name from the signal if it's not explicitly given.
@@ -26,6 +25,11 @@ class Peeker(PeekerBase):
 
         # Set the width of the signal.
         self.trace.num_bits = len(signal)
+
+        # The VCD writer won't store a sample until the signal changes,
+        # so store the default signal value at time zero to initialize
+        # the trace.
+        self.trace.store_sample(0, 0)  # Signal value 0 at time 0.
 
     @classmethod
     def assign_simulator(cls, simulator):
@@ -39,6 +43,6 @@ class Peeker(PeekerBase):
 
         for peeker in cls.peekers():
             if id(peeker.signal) == id(signal):
-                print(f"store: {peeker.trace.name} {value} @ {time}")
+                # print(f"store: {peeker.trace.name} {value} @ {time}")
                 peeker.trace.store_sample(value, time)
                 return

@@ -12,7 +12,6 @@ from myhdl import EnumItemType, SignalType, always_comb, now
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL
 
-# from .. import peekerbase
 from ..peekerbase import *
 
 standard_library.install_aliases()
@@ -26,7 +25,7 @@ class Peeker(PeekerBase):
             pass
 
         else:
-    
+
             # Check to see if a signal is being monitored.
             if not isinstance(signal, SignalType):
                 raise Exception(

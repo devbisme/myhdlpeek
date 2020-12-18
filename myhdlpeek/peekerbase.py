@@ -13,7 +13,6 @@ import IPython.display as DISP
 import matplotlib.pyplot as plt
 import nbwavedrom
 from future import standard_library
-
 from tabulate import tabulate
 
 from .trace import *
@@ -42,9 +41,7 @@ class PeekerBase(object):
         # Assign a unique name to this peeker.
         self.name_dup = False  # Start off assuming the name has no duplicates.
         index = 0  # Starting index for disambiguating duplicates.
-        nm = "{name}[{index}]".format(
-            **locals()
-        )  # Create name with bracketed index.
+        nm = "{name}[{index}]".format(**locals())  # Create name with bracketed index.
         # Search through the peeker names for a match.
         while nm in self._peekers:
             # A match was found, so mark the matching names as duplicates.
@@ -543,16 +540,18 @@ def setup(cls, use_wavedrom=False, use_jupyter=True):
         cls.show_traces = traces_to_matplotlib
 
     # Create an intermediary function to call cls.show_waveforms and assign it to show_waveforms.
-    # Then if cls.show_waveforms is changed, any calls to show_waveforms will call the changed 
+    # Then if cls.show_waveforms is changed, any calls to show_waveforms will call the changed
     # function. Directly assigning cls.show_waveforms to show_waveforms would mean any external
     # code that calls show_waveforms() would always call the initially-assigned function even if
     # cls.show_waveforms got a different assignment later.
     def shw_wvfrms(*args, **kwargs):
         cls.show_waveforms(*args, **kwargs)
+
     show_waveforms = shw_wvfrms
 
     def shw_trcs(*args, **kwargs):
         cls.show_traces(*args, **kwargs)
+
     show_traces = shw_trcs
 
     # These class methods don't change as the options are altered, so just assign them

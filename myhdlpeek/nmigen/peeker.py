@@ -8,7 +8,6 @@ import functools
 from builtins import dict, int, str, super
 
 from future import standard_library
-from nmigen.sim import Tick
 
 from ..peekerbase import *
 
@@ -30,12 +29,16 @@ class Peeker(PeekerBase):
 
     @classmethod
     def assign_simulator(cls, simulator):
-        """Assign nmigen Simulator to all Peekers."""
+        """Capture traces by assigning Peeker as a VCD Writer to nmigen."""
 
-        def peek_process():
-            while True:
-                for peeker in cls.peekers():
-                    peeker.trace.store_sample((yield peeker.signal), simulator._engine.now)
-                yield Tick()
+        simulator._engine._vcd_writers.append(cls)
 
-        simulator.add_process(peek_process)
+    @classmethod
+    def update(cls, time, signal, value):
+        """Called during VCD writing to record signal value."""
+
+        for peeker in cls.peekers():
+            if id(peeker.signal) == id(signal):
+                print(f"store: {peeker.trace.name} {value} @ {time}")
+                peeker.trace.store_sample(value, time)
+                return

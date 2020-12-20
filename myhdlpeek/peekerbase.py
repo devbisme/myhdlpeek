@@ -27,6 +27,8 @@ USE_JUPYTERLAB = True
 class PeekerBase(object):
     _peekers = dict()  # Global list of all Peekers.
 
+    unit_time = 1  # Time interval for a single tick-mark span.
+
     def __new__(cls, *args, **kwargs):
         # Keep PeekerBase from being instantiated.
         if cls is PeekerBase:
@@ -222,6 +224,7 @@ class PeekerBase(object):
         """
 
         cls._clean_names()
+        Trace.unit_time = cls.unit_time
 
         if names:
             # Go through the provided names and split any containing spaces
@@ -259,6 +262,7 @@ class PeekerBase(object):
         """
 
         cls._clean_names()
+        Trace.unit_time = cls.unit_time
 
         if names:
             # Go through the provided names and split any containing spaces

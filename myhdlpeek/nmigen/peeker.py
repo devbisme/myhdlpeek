@@ -9,6 +9,8 @@ from builtins import dict, int, str, super
 
 from future import standard_library
 
+from nmigen.sim import Tick
+
 from ..peekerbase import *
 
 standard_library.install_aliases()
@@ -32,10 +34,21 @@ class Peeker(PeekerBase):
         self.trace.store_sample(0, 0)  # Signal value 0 at time 0.
 
     @classmethod
-    def assign_simulator(cls, simulator):
-        """Capture traces by assigning Peeker as a VCD Writer to nmigen."""
+    def assign_simulator(cls, simulator, use_vcd_writer=False):
+        """Capture traces using a synchronous process or a VCD writer."""
 
-        simulator._engine._vcd_writers.append(cls)
+        if use_vcd_writer:
+            simulator._engine._vcd_writers.append(cls)
+
+        else:
+            # Use a synchronous process to capture trace samples.
+            def peek_process():
+                while True:
+                    for peeker in cls.peekers():
+                        peeker.trace.store_sample((yield peeker.signal), simulator._engine.now)
+                    yield Tick()
+    
+            simulator.add_process(peek_process)
 
     @classmethod
     def update(cls, time, signal, value):

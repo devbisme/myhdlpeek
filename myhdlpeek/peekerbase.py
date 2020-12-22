@@ -20,10 +20,6 @@ from .trace import *
 standard_library.install_aliases()
 
 
-# Set this flag to False if using the older Jupyter notebook.
-USE_JUPYTERLAB = True
-
-
 class PeekerBase(object):
     _peekers = dict()  # Global list of all Peekers.
 
@@ -305,14 +301,14 @@ class PeekerBase(object):
         width = kwargs.get("width")
         skin = kwargs.get("skin", "default")
 
-        if USE_JUPYTERLAB:
-            # Supports the new Jupyter Lab.
-            return nbwavedrom.draw(cls.to_wavejson(*names, **kwargs))
-        else:
+        if USE_JUPYTER:
             # Used with older Jupyter notebooks.
             wavejson_to_wavedrom(
                 cls.to_wavejson(*names, **kwargs), width=width, skin=skin
             )
+        else:
+            # Supports the new Jupyter Lab.
+            return nbwavedrom.draw(cls.to_wavejson(*names, **kwargs))
 
     def delay(self, delta):
         """Return the trace data shifted in time by delta units."""
@@ -565,5 +561,5 @@ def setup(cls, use_wavedrom=False, use_jupyter=True):
     show_text_table = cls.to_text_table
     show_html_table = cls.to_html_table
 
-    global USE_JUPYTERLAB
-    USE_JUPYTERLAB = not use_jupyter
+    global USE_JUPYTER
+    USE_JUPYTER = use_jupyter

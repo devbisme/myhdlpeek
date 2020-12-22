@@ -97,39 +97,33 @@ class Trace(list):
         if end_time > self[-1].time:
             self.append(Sample(end_time, self[-1].value))
 
-    def remove_repeats(self):
-        """Return a trace with only unique sampling times and no time-adjacent repeated values."""
+    def collapse_time_repeats(trc):
+        """Return trace with samples having the same sampling time collapsed into a single sample."""
+        trace = copy(trc)
+        trace.clear()
 
-        def remove_time_repeats(trc):
-            trace = copy(trc)
-            trace.clear()
+        # Build the trace backwards, moving from the newest to the oldest sample.
+        # Accept only samples having a time < the most recently accepted sample.
+        trace.append(trc[-1])
+        for sample in trc[-1::-1]:
+            if sample.time < trace[0].time:
+                trace.insert(0, sample)
 
-            # Build the trace backwards, starting from the newest sample.
-            # Accept only samples having a time < the most recently accepted sample.
-            trace.append(trc[-1])
-            for sample in trc[-1::-1]:
-                if sample.time < trace[0].time:
-                    trace.insert(0, sample)
+        return trace
 
-            return trace
+    def collapse_value_repeats(trc):
+        """Return trace with consecutive samples having the same value collapsed into a single sample."""
+        trace = copy(trc)
+        trace.clear()
 
-        def remove_value_repeats(trc):
-            trace = copy(trc)
-            trace.clear()
+        # Build the trace forwards, removing any samples with the same
+        # value as the previous sample.
+        trace.append(trc[0])
+        for sample in trc[1:]:
+            if sample.value != trace[-1].value:
+                trace.append(sample)
 
-            # Build the trace forwards, removing any samples with the same
-            # value as the previous sample.
-            trace.append(trc[0])
-            for sample in trc[1:]:
-                if sample.value != trace[-1].value:
-                    # print(f"appending {trace[-1]}, {sample}")
-                    trace.append(sample)
-                # else:
-                    # print(f"skipping {trace[-1]}, {sample}")
-
-            return trace
-
-        return remove_value_repeats(remove_time_repeats(self))
+        return trace
 
     def interpolate(self, times):
         """Insert interpolated values at the times in the given list."""
@@ -141,6 +135,7 @@ class Trace(list):
         trace = copy(self)
         prev_sample = trace[0]
         for sample in trace[1:]:
+            # TODO: This causes a problem if sample.time - delta < prev_sample.time.
             trace.insert_sample(Sample(sample.time - delta, prev_sample.value))
             prev_sample = sample
         return trace
@@ -315,12 +310,13 @@ class Trace(list):
         """Return list of times trace value is true (non-zero)."""
         return [sample.time for sample in self if sample.value]
 
-    def to_matplotlib(self, subplot, start_time, stop_time):
+    def to_matplotlib(self, subplot, start_time, stop_time, xlim=None):
         """Fill a matplotlib subplot for a trace between the start & stop times."""
 
-        # Set the X axis limits. Make stop time just a little bit shorter
-        # to prevent some artifacts at the end of the trace plot.
-        subplot.set_xlim(start_time, start_time + (stop_time - start_time) * 0.99)
+        # Set the X axis limits to clip the trace duration to the desired limits.
+        if not xlim:
+            xlim = (start_time, stop_time)
+        subplot.set_xlim(*xlim)
 
         # Set the Y axis limits.
         subplot.set_ylim(-0.2, 1.2)
@@ -341,14 +337,22 @@ class Trace(list):
         subplot.spines["top"].set_visible(False)
         subplot.spines["bottom"].set_visible(False)
 
-        trace = copy(self)
-
-        # Remove repeats of samples having the same sample time or consecutively-repeated values.
-        trace = trace.remove_repeats()
+        # Copy the trace while removing any consecutively-repeated values.
+        trace = self.collapse_value_repeats()
 
         # Insert samples for beginning/end times into a copy of the trace data.
         trace.insert_sample(Sample(start_time, self.get_value(start_time)))
         trace.insert_sample(Sample(stop_time, self.get_value(stop_time)))
+
+        # Extend the trace on both ends to make sure it covers the start/stop interval.
+        # Count on matplotlib to clip the waveforms.
+        extended_start_sample = Sample(trace[0].time - self.unit_time, trace[0].value)
+        extended_stop_sample = Sample(trace[-1].time + self.unit_time, trace[-1].value)
+        trace.insert_sample(extended_start_sample)
+        trace.insert_sample(extended_stop_sample)
+
+        # Remove repeats of samples having the same sample time.
+        trace = trace.collapse_time_repeats()
 
         # Plot the bus or binary trace.
         if trace.num_bits > 1:
@@ -479,6 +483,11 @@ class Trace(list):
         if wave_data:
             wave["data"] = wave_data
         return wave
+
+
+###############################################################################
+# Functions for handling multiple traces follow...
+###############################################################################
 
 
 def _get_sample_times(*traces, **kwargs):
@@ -681,6 +690,13 @@ def traces_to_matplotlib(*traces, **kwargs):
     if tock:
         axes[-1].set_xticklabels([str(x) for x in range(start, stop)], minor=True)
 
+    # Adjust the limits of the X axis so the grid doesn't get chopped-off and
+    # produce artifacts if a grid line is at the right or left edge.
+    bbox = axes[-1].get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    width_in_pixels = bbox.width * fig.dpi
+    time_per_pixel = (stop_time - start_time) / width_in_pixels
+    xlim = (start_time-time_per_pixel, stop_time+time_per_pixel)
+
     # Plot each trace waveform.
     for i, (trace, axis) in enumerate(zip(traces, axes), 1):
 
@@ -702,7 +718,7 @@ def traces_to_matplotlib(*traces, **kwargs):
             axis.spines["top"].set_visible(False)
             axis.spines["bottom"].set_visible(False)
         else:
-            trace.to_matplotlib(axis, start_time, stop_time)
+            trace.to_matplotlib(axis, start_time, stop_time, xlim)
 
 
 def wavejson_to_wavedrom(wavejson, width=None, skin="default"):

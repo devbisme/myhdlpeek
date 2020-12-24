@@ -44,7 +44,7 @@ class Peeker(PeekerBase):
             # Use a synchronous process to capture trace samples.
             def peek_process():
                 while True:
-                    for peeker in cls.peekers():
+                    for peeker in cls.peekers.values():
                         peeker.trace.store_sample((yield peeker.signal), simulator._engine.now)
                     yield Tick()
     
@@ -54,7 +54,7 @@ class Peeker(PeekerBase):
     def update(cls, time, signal, value):
         """Called during VCD writing to record signal value."""
 
-        for peeker in cls.peekers():
+        for peeker in cls.peekers.values():
             if id(peeker.signal) == id(signal):
                 # print(f"store: {peeker.trace.name} {value} @ {time}")
                 peeker.trace.store_sample(value, time)

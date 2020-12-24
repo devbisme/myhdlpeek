@@ -57,6 +57,46 @@ class PeekerBase(object):
         self.peekers[self.trace.name] = self
 
     @classmethod
+    def config(cls, use_wavedrom=False, use_jupyter=True):
+        """Setup options and shortcut functions."""
+
+        global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
+
+        if use_wavedrom:
+            cls.show_waveforms = cls.to_wavedrom
+            # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
+            cls.show_traces = traces_to_wavedrom
+        else:
+            cls.show_waveforms = cls.to_matplotlib
+            # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
+            cls.show_traces = traces_to_matplotlib
+
+        # Create an intermediary function to call cls.show_waveforms and assign it to show_waveforms.
+        # Then if cls.show_waveforms is changed, any calls to show_waveforms will call the changed
+        # function. Directly assigning cls.show_waveforms to show_waveforms would mean any external
+        # code that calls show_waveforms() would always call the initially-assigned function even if
+        # cls.show_waveforms got a different assignment later.
+        def shw_wvfrms(*args, **kwargs):
+            cls.show_waveforms(*args, **kwargs)
+
+        show_waveforms = shw_wvfrms
+
+        def shw_trcs(*args, **kwargs):
+            cls.show_traces(*args, **kwargs)
+
+        show_traces = shw_trcs
+
+        # These class methods don't change as the options are altered, so just assign them
+        # to shortcuts without creating intermediary functions like above.
+        clear_traces = cls.clear_traces
+        export_dataframe = cls.to_dataframe
+        show_text_table = cls.to_text_table
+        show_html_table = cls.to_html_table
+
+        global USE_JUPYTER
+        USE_JUPYTER = use_jupyter
+
+    @classmethod
     def clear(cls):
         """Clear the global list of Peekers."""
         cls.peekers = dict()
@@ -66,11 +106,6 @@ class PeekerBase(object):
         """Clear waveform samples from the global list of Peekers."""
         for p in cls.peekers.values():
             p.trace.clear()
-
-    @classmethod
-    def peekers(cls):
-        """Return the dict containing all the Peekers."""
-        return cls.peekers
 
     @classmethod
     def start_time(cls):
@@ -531,43 +566,4 @@ def _sort_names(names):
     srt_names = sorted(names, key=name_key)
     srt_names = sorted(srt_names, key=index_key)
     return srt_names
-
-
-def setup(cls, use_wavedrom=False, use_jupyter=True):
-    """Setup options and shortcut functions."""
-
-    global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
-
-    if use_wavedrom:
-        cls.show_waveforms = cls.to_wavedrom
-        # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
-        cls.show_traces = traces_to_wavedrom
-    else:
-        cls.show_waveforms = cls.to_matplotlib
-        # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
-        cls.show_traces = traces_to_matplotlib
-
-    # Create an intermediary function to call cls.show_waveforms and assign it to show_waveforms.
-    # Then if cls.show_waveforms is changed, any calls to show_waveforms will call the changed
-    # function. Directly assigning cls.show_waveforms to show_waveforms would mean any external
-    # code that calls show_waveforms() would always call the initially-assigned function even if
-    # cls.show_waveforms got a different assignment later.
-    def shw_wvfrms(*args, **kwargs):
-        cls.show_waveforms(*args, **kwargs)
-
-    show_waveforms = shw_wvfrms
-
-    def shw_trcs(*args, **kwargs):
-        cls.show_traces(*args, **kwargs)
-
-    show_traces = shw_trcs
-
-    # These class methods don't change as the options are altered, so just assign them
-    # to shortcuts without creating intermediary functions like above.
-    clear_traces = cls.clear_traces
-    export_dataframe = cls.to_dataframe
-    show_text_table = cls.to_text_table
-    show_html_table = cls.to_html_table
-
-    global USE_JUPYTER
-    USE_JUPYTER = use_jupyter
+    

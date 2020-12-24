@@ -21,7 +21,7 @@ standard_library.install_aliases()
 
 
 class PeekerBase(object):
-    _peekers = dict()  # Global list of all Peekers.
+    peekers = dict()  # Global list of all Peekers.
 
     unit_time = 1  # Time interval for a single tick-mark span.
 
@@ -41,9 +41,9 @@ class PeekerBase(object):
         index = 0  # Starting index for disambiguating duplicates.
         nm = "{name}[{index}]".format(**locals())  # Create name with bracketed index.
         # Search through the peeker names for a match.
-        while nm in self._peekers:
+        while nm in self.peekers:
             # A match was found, so mark the matching names as duplicates.
-            self._peekers[nm].name_dup = True
+            self.peekers[nm].name_dup = True
             self.name_dup = True
             # Go to the next index and see if that name is taken.
             index += 1
@@ -54,33 +54,33 @@ class PeekerBase(object):
         self.signal = signal
 
         # Add this peeker to the global list.
-        self._peekers[self.trace.name] = self
+        self.peekers[self.trace.name] = self
 
     @classmethod
     def clear(cls):
         """Clear the global list of Peekers."""
-        cls._peekers = dict()
+        cls.peekers = dict()
 
     @classmethod
     def clear_traces(cls):
         """Clear waveform samples from the global list of Peekers."""
-        for p in cls._peekers.values():
+        for p in cls.peekers.values():
             p.trace.clear()
 
     @classmethod
     def peekers(cls):
-        """Return a list of all the Peekers."""
-        return cls._peekers.values()
+        """Return the dict containing all the Peekers."""
+        return cls.peekers
 
     @classmethod
     def start_time(cls):
         """Return the time of the first signal transition captured by the peekers."""
-        return min((p.trace.start_time() for p in cls.peekers()))
+        return min((p.trace.start_time() for p in cls.peekers))
 
     @classmethod
     def stop_time(cls):
         """Return the time of the last signal transition captured by the peekers."""
-        return max((p.trace.stop_time() for p in cls.peekers()))
+        return max((p.trace.stop_time() for p in cls.peekers))
 
     @classmethod
     def _clean_names(cls):
@@ -93,7 +93,7 @@ class PeekerBase(object):
         """
 
         index_re = "\[\d+\]$"
-        for name, peeker in list(cls._peekers.items()):
+        for name, peeker in list(cls.peekers.items()):
             if not peeker.name_dup:
                 # Base name is not repeated, so remove any index.
                 new_name = re.sub(index_re, "", name)
@@ -101,9 +101,9 @@ class PeekerBase(object):
                     # Index got removed so name changed. Therefore,
                     # remove the original entry and replace with
                     # the renamed Peeker.
-                    cls._peekers.pop(name)
+                    cls.peekers.pop(name)
                     peeker.trace.name = new_name
-                    cls._peekers[new_name] = peeker
+                    cls.peekers[new_name] = peeker
 
     @classmethod
     def to_dataframe(cls, *names, **kwargs):
@@ -133,10 +133,10 @@ class PeekerBase(object):
             names = [nm for name in names for nm in name.split()]
         else:
             # If no names provided, use all the peekers.
-            names = _sort_names(cls._peekers.keys())
+            names = _sort_names(cls.peekers.keys())
 
         # Collect all the traces for the Peekers matching the names.
-        traces = [getattr(cls._peekers.get(name), "trace", None) for name in names]
+        traces = [getattr(cls.peekers.get(name), "trace", None) for name in names]
 
         return traces_to_dataframe(*traces, **kwargs)
 
@@ -168,10 +168,10 @@ class PeekerBase(object):
             names = [nm for name in names for nm in name.split()]
         else:
             # If no names provided, use all the peekers.
-            names = _sort_names(cls._peekers.keys())
+            names = _sort_names(cls.peekers.keys())
 
         # Collect all the traces for the Peekers matching the names.
-        traces = [getattr(cls._peekers.get(name), "trace", None) for name in names]
+        traces = [getattr(cls.peekers.get(name), "trace", None) for name in names]
 
         return traces_to_table_data(*traces, **kwargs)
 
@@ -209,9 +209,13 @@ class PeekerBase(object):
             start_time: The earliest (left-most) time bound for the waveform display.
             stop_time: The latest (right-most) time bound for the waveform display.
             title: String containing the title placed across the top of the display.
+            title_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             caption: String containing the title placed across the bottom of the display.
+            caption_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             tick: If true, times are shown at the tick marks of the display.
             tock: If true, times are shown between the tick marks of the display.
+            grid_fmt (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            time_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             width: The width of the waveform display in inches.
             height: The height of the waveform display in inches.
 
@@ -228,10 +232,10 @@ class PeekerBase(object):
             names = [nm for name in names for nm in name.split()]
         else:
             # If no names provided, use all the peekers.
-            names = _sort_names(cls._peekers.keys())
+            names = _sort_names(cls.peekers.keys())
 
         # Collect all the Peekers matching the names.
-        peekers = [cls._peekers.get(name) for name in names]
+        peekers = [cls.peekers.get(name) for name in names]
         traces = [getattr(p, "trace", None) for p in peekers]
         traces_to_matplotlib(*traces, **kwargs)
 
@@ -266,10 +270,10 @@ class PeekerBase(object):
             names = [nm for name in names for nm in name.split()]
         else:
             # If no names provided, use all the peekers.
-            names = _sort_names(cls._peekers.keys())
+            names = _sort_names(cls.peekers.keys())
 
         # Collect all the Peekers matching the names.
-        peekers = [cls._peekers.get(name) for name in names]
+        peekers = [cls.peekers.get(name) for name in names]
         traces = [getattr(p, "trace", None) for p in peekers]
         return traces_to_wavejson(*traces, **kwargs)
 
@@ -442,9 +446,13 @@ class PeekerGroup(dict):
             start_time: The earliest (left-most) time bound for the waveform display.
             stop_time: The latest (right-most) time bound for the waveform display.
             title: String containing the title placed across the top of the display.
-            caption: String containing the caption placed across the bottom of the display.
+            title_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+            caption: String containing the title placed across the bottom of the display.
+            caption_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             tick: If true, times are shown at the tick marks of the display.
             tock: If true, times are shown between the tick marks of the display.
+            grid_fmt (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            time_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             width: The width of the waveform display in inches.
             height: The height of the waveform display in inches.
 

@@ -63,4 +63,4 @@ class Peeker(PeekerBase):
     @classmethod
     def instances(cls):
         """Return a list of all the instantiated Peeker modules."""
-        return [p.instance for p in cls.peekers()]
+        return [p.instance for p in cls.peekers.values()]

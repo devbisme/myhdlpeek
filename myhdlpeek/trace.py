@@ -33,9 +33,29 @@ class Trace(list):
     unit_time = 1  # Time interval for a single tick-mark span.
 
     def __init__(self, *args, **kwargs):
+        self.line_fmt = '-C0'  # Default trace is solid, blue line.
+        self.line2D = {}
+        self.name_fmt = {}
+        self.data_fmt = {}
+        self.format(**kwargs)
         super().__init__(*args, **kwargs)
         self.name = None
         self.num_bits = 0
+
+    def format(self, **kwargs):
+        """
+        line_fmt (string): [marker][line][color] https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
+        line2D (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+        name_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+        data_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+        """
+        fmt = kwargs.pop('line_fmt', {})
+        if isinstance(fmt, dict):
+            self.line2D.update(fmt)
+        else:
+            self.line_fmt = fmt
+        self.name_fmt.update(kwargs.pop('name_fmt', {}))
+        self.data_fmt.update(kwargs.pop('data_fmt', {}))
 
     def store_sample(self, value, time):
         """Store a value and the current time into the trace."""
@@ -321,11 +341,11 @@ class Trace(list):
         # Set the Y axis limits.
         subplot.set_ylim(-0.2, 1.2)
 
-        # Set the Y axis label position for each plot trace.
+        # Set the Y axis label position for each trace name.
         ylbl_position = dict(
             rotation=0, horizontalalignment="right", verticalalignment="center", x=-0.01
         )
-        subplot.set_ylabel(self.name, ylbl_position)
+        subplot.set_ylabel(self.name, ylbl_position, **self.name_fmt)
 
         # Remove ticks from Y axis.
         subplot.set_yticks([])
@@ -344,15 +364,13 @@ class Trace(list):
         trace.insert_sample(Sample(start_time, self.get_value(start_time)))
         trace.insert_sample(Sample(stop_time, self.get_value(stop_time)))
 
-        # Extend the trace on both ends to make sure it covers the start/stop interval.
-        # Count on matplotlib to clip the waveforms.
-        extended_start_sample = Sample(trace[0].time - self.unit_time, trace[0].value)
-        extended_stop_sample = Sample(trace[-1].time + self.unit_time, trace[-1].value)
-        trace.insert_sample(extended_start_sample)
-        trace.insert_sample(extended_stop_sample)
-
         # Remove repeats of samples having the same sample time.
         trace = trace.collapse_time_repeats()
+
+        # Extend the trace on both ends to make sure it covers the start/stop interval.
+        # Count on matplotlib to clip the waveforms.
+        # trace[0] = Sample(trace[0].time - self.unit_time, trace[0].value)
+        # trace[-1] = Sample(trace[-1].time + self.unit_time, trace[-1].value)
 
         # Plot the bus or binary trace.
         if trace.num_bits > 1:
@@ -380,6 +398,7 @@ class Trace(list):
                     val,
                     horizontalalignment="center",
                     verticalalignment="center",
+                    **self.data_fmt
                 )
                 time0 = time1
                 if time0 >= stop_time:
@@ -402,14 +421,14 @@ class Trace(list):
             x = [sample.time for sample in tgl_trace]
             y = [sample.value for sample in tgl_trace]
             y_bar = [sample.value for sample in bar_trace]
-            subplot.plot(x, y, "tab:blue", x, y_bar, "tab:blue")
+            subplot.plot(x, y, self.line_fmt, x, y_bar, self.line_fmt, **self.line2D)
 
         else:
             # Binary trace.
             trace = trace.add_slope()
             x = [sample.time for sample in trace]
             y = [sample.value for sample in trace]
-            subplot.plot(x, y, "tab:blue")
+            subplot.plot(x, y, self.line_fmt, **self.line2D)
 
     def to_wavejson(self, start_time, stop_time):
         """Generate the WaveJSON data for a trace between the start & stop times."""
@@ -629,9 +648,13 @@ def traces_to_matplotlib(*traces, **kwargs):
             start_time: The earliest (left-most) time bound for the waveform display.
             stop_time: The latest (right-most) time bound for the waveform display.
             title: String containing the title placed across the top of the display.
+            title_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             caption: String containing the title placed across the bottom of the display.
+            caption_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             tick: If true, times are shown at the tick marks of the display.
             tock: If true, times are shown between the tick marks of the display.
+            grid_fmt (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            time_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
             width: The width of the waveform display in inches.
             height: The height of the waveform display in inches.
 
@@ -644,10 +667,6 @@ def traces_to_matplotlib(*traces, **kwargs):
     cycle_wid = 0.5  # Default unit cycle width in inches.
 
     # Handle keyword args explicitly for Python 2 compatibility.
-    tock = kwargs.get("tock", False)
-    tick = kwargs.get("tick", False)
-    caption = kwargs.get("caption", "")
-    title = kwargs.get("title", "")
     start_time = kwargs.get(
         "start_time",
         min([trace.start_time() for trace in traces if isinstance(trace, Trace)]),
@@ -656,6 +675,18 @@ def traces_to_matplotlib(*traces, **kwargs):
         "stop_time",
         max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]),
     )
+    title = kwargs.get("title", "")
+    title_fmt = {'fontweight': 'bold'}
+    title_fmt.update(kwargs.get('title_fmt', {}))
+    caption = kwargs.get("caption", "")
+    caption_fmt = {'fontstyle': 'oblique'}
+    caption_fmt.update(kwargs.get('caption_fmt', {}))
+    tick = kwargs.get("tick", False)
+    tock = kwargs.get("tock", False)
+    grid_fmt = {'color':'C1', 'alpha':1.0}
+    grid_fmt.update(kwargs.get('grid_fmt', {}))
+    time_fmt = {}
+    time_fmt.update(kwargs.get('time_fmt', {}))
     width = kwargs.get("width", (stop_time - start_time)/Trace.unit_time * cycle_wid)
     height = kwargs.get("height", num_traces * trace_hgt)
 
@@ -672,10 +703,10 @@ def traces_to_matplotlib(*traces, **kwargs):
     axes = axes[:, 0]  # Collapse 2D matrix of subplots into a 1D list.
 
     # Set the caption on the X-axis label on the bottom-most trace.
-    axes[-1].set_xlabel(caption)
+    axes[-1].set_xlabel(caption, **caption_fmt)
 
     # Set the title for the collection of traces on the top-most trace.
-    axes[0].set_title(title)
+    axes[0].set_title(title, **title_fmt)
 
     # Set X-axis ticks at the bottom of the stack of traces.
     start = math.floor(start_time/Trace.unit_time)
@@ -686,9 +717,9 @@ def traces_to_matplotlib(*traces, **kwargs):
     axes[-1].set_xticks([(x + 0.5)*Trace.unit_time for x in range(start, stop)], minor=True)
     # Place cycle times at tick marks or between them.
     if not tick:
-        axes[-1].set_xticklabels([], minor=False)
+        axes[-1].set_xticklabels([], minor=False, **time_fmt)
     if tock:
-        axes[-1].set_xticklabels([str(x) for x in range(start, stop)], minor=True)
+        axes[-1].set_xticklabels([str(x) for x in range(start, stop)], minor=True, **time_fmt)
 
     # Adjust the limits of the X axis so the grid doesn't get chopped-off and
     # produce artifacts if a grid line is at the right or left edge.
@@ -704,7 +735,7 @@ def traces_to_matplotlib(*traces, **kwargs):
         axis.set_position([0.1, (num_traces - i) * trace_hgt_pctg, 0.8, trace_hgt_pctg])
 
         # Place grid on X axis.
-        axis.grid(axis="x", color="orange", alpha=1.0)
+        axis.grid(axis="x", **grid_fmt)
 
         if not trace:
             # Leave a blank space for non-traces.

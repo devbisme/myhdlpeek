@@ -32,30 +32,66 @@ class Trace(list):
 
     unit_time = 1  # Time interval for a single tick-mark span.
 
+    # Default matplotlib settings for a Trace.
+    #     line_fmt (string): [marker][line][color] https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
+    #     line2D (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+    #     name_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+    #     data_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+    line_fmt = "-C0"  # solid, blue line.
+    line2D = {}
+    name_fmt = {}
+    data_fmt = {}
+
+    trace_fields = ['line_fmt', 'line2D', 'name_fmt', 'data_fmt']
+
     def __init__(self, *args, **kwargs):
-        self.line_fmt = '-C0'  # Default trace is solid, blue line.
-        self.line2D = {}
-        self.name_fmt = {}
-        self.data_fmt = {}
-        self.format(**kwargs)
-        super().__init__(*args, **kwargs)
+        self.config(**kwargs)
+        super().__init__(*args)
         self.name = None
         self.num_bits = 0
 
-    def format(self, **kwargs):
+    @classmethod
+    def config_defaults(cls, **kwargs):
         """
-        line_fmt (string): [marker][line][color] https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
-        line2D (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
-        name_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
-        data_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+        Set default configuration for all Traces.
+
+        Keyword Args:
+            line_fmt (string): [marker][line][color] https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
+            line2D (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            name_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+            data_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
         """
-        fmt = kwargs.pop('line_fmt', {})
-        if isinstance(fmt, dict):
-            self.line2D.update(fmt)
-        else:
-            self.line_fmt = fmt
-        self.name_fmt.update(kwargs.pop('name_fmt', {}))
-        self.data_fmt.update(kwargs.pop('data_fmt', {}))
+        for k, v in kwargs.items():
+            if k not in cls.trace_fields:
+                continue
+            if isinstance(v, dict):
+                setattr(cls, k, getattr(cls, k, {}))
+                getattr(cls, k).update(v)
+            else:
+                setattr(cls, k, v)
+        for k in cls.trace_fields:
+            kwargs.pop(k, None)  # Remove the keyword arg.
+
+    def config(self, **kwargs):
+        """
+        Set configuration for a particular Trace.
+
+        Keyword Args:
+            line_fmt (string): [marker][line][color] https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
+            line2D (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            name_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+            data_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
+        """
+        for k, v in kwargs.items():
+            if k not in self.trace_fields:
+                continue
+            if isinstance(v, dict):
+                setattr(self, k, copy(getattr(self, k, {})))
+                getattr(self, k).update(v)
+            else:
+                setattr(self, k, copy(v))
+        for k in self.trace_fields:
+            kwargs.pop(k, None)  # Remove the keyword arg.
 
     def store_sample(self, value, time):
         """Store a value and the current time into the trace."""

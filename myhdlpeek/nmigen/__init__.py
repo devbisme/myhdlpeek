@@ -3,7 +3,7 @@
 # Copyright (c) 2017-2020, XESS Corp. The MIT License (MIT).
 
 from .peeker import Peeker
-Peeker.config()
+Peeker.config_defaults()
 
 from ..trace import *
 from ..peekerbase import *

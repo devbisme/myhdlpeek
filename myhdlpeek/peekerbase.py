@@ -2,6 +2,8 @@
 
 # Copyright (c) 2017-2020, XESS Corp. The MIT License (MIT).
 
+# TODO: Use https://github.com/bendichter/brokenaxes to break long traces into segments.
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
@@ -23,6 +25,9 @@ standard_library.install_aliases()
 class PeekerBase(object):
     peekers = dict()  # Global list of all Peekers.
 
+    USE_JUPYTER = False
+    USE_WAVEDROM = False
+
     unit_time = 1  # Time interval for a single tick-mark span.
 
     def __new__(cls, *args, **kwargs):
@@ -31,10 +36,13 @@ class PeekerBase(object):
             raise TypeError("PeekerBase class may not be instantiated")
         return object.__new__(cls)
 
-    def __init__(self, signal, name):
+    def __init__(self, signal, name, **kwargs):
 
-        # Create storage for signal trace.
+        # Create storage for a signal trace.
         self.trace = Trace()
+
+        # Configure the Peeker and its Trace instance.
+        self.config(**kwargs)
 
         # Assign a unique name to this peeker.
         self.name_dup = False  # Start off assuming the name has no duplicates.
@@ -57,12 +65,16 @@ class PeekerBase(object):
         self.peekers[self.trace.name] = self
 
     @classmethod
-    def config(cls, use_wavedrom=False, use_jupyter=True):
+    def config_defaults(cls, **kwargs):
         """Setup options and shortcut functions."""
+
+        # Configure Trace defaults.
+        Trace.config_defaults(**kwargs)
 
         global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
 
-        if use_wavedrom:
+        cls.USE_WAVEDROM = kwargs.pop('use_wavedrom', cls.USE_WAVEDROM)
+        if cls.USE_WAVEDROM:
             cls.show_waveforms = cls.to_wavedrom
             # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
             cls.show_traces = traces_to_wavedrom
@@ -93,8 +105,32 @@ class PeekerBase(object):
         show_text_table = cls.to_text_table
         show_html_table = cls.to_html_table
 
-        global USE_JUPYTER
-        USE_JUPYTER = use_jupyter
+        cls.USE_JUPYTER = kwargs.pop('use_jupyter', cls.USE_JUPYTER)
+
+        # Remaining keyword args.
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                setattr(cls, k, getattr(cls, k, {}))
+                getattr(cls, k).update(v)
+            else:
+                setattr(cls, k, copy(v))
+
+
+    def config(self, **kwargs):
+        """
+        Set configuration for a particular Peeker.
+        """
+
+        # Configure trace instance.
+        self.trace.config(**kwargs)
+
+        # Remaining keyword args.
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                setattr(self, k, copy(getattr(self, k, {})))
+                getattr(self, k).update(v)
+            else:
+                setattr(self, k, copy(v))
 
     @classmethod
     def clear(cls):
@@ -340,7 +376,7 @@ class PeekerBase(object):
         width = kwargs.get("width")
         skin = kwargs.get("skin", "default")
 
-        if USE_JUPYTER:
+        if cls.USE_JUPYTER:
             # Used with older Jupyter notebooks.
             wavejson_to_wavedrom(
                 cls.to_wavejson(*names, **kwargs), width=width, skin=skin
@@ -566,4 +602,3 @@ def _sort_names(names):
     srt_names = sorted(names, key=name_key)
     srt_names = sorted(srt_names, key=index_key)
     return srt_names
-    

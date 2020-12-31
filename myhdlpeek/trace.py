@@ -38,11 +38,12 @@ class Trace(list):
     #     name_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
     #     data_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
     line_fmt = "-C0"  # solid, blue line.
-    line2D = {}
     name_fmt = {}
     data_fmt = {}
 
-    trace_fields = ['line_fmt', 'line2D', 'name_fmt', 'data_fmt']
+    slope = 0.20  # trace transition slope as % of unit_time.
+
+    trace_fields = ['line_fmt', 'name_fmt', 'data_fmt', 'slope']
 
     def __init__(self, *args, **kwargs):
         self.config(**kwargs)
@@ -66,7 +67,10 @@ class Trace(list):
                 continue
             if isinstance(v, dict):
                 setattr(cls, k, getattr(cls, k, {}))
-                getattr(cls, k).update(v)
+                try:
+                    getattr(cls, k).update(v)
+                except AttributeError:
+                    setattr(cls, k, v)
             else:
                 setattr(cls, k, v)
         for k in cls.trace_fields:
@@ -87,7 +91,11 @@ class Trace(list):
                 continue
             if isinstance(v, dict):
                 setattr(self, k, copy(getattr(self, k, {})))
-                getattr(self, k).update(v)
+                try:
+                    getattr(self, k).update(v)
+                except AttributeError:
+                    setattr(self, k, {})
+                    getattr(self, k).update(v)
             else:
                 setattr(self, k, copy(v))
         for k in self.trace_fields:
@@ -139,9 +147,9 @@ class Trace(list):
 
     def delay(self, delta):
         """Return the trace data shifted in time by delta units."""
-        delayed_trace = Trace([Sample(t + delta, v) for t, v in self])
-        delayed_trace.name = self.name
-        delayed_trace.num_bits = self.num_bits
+        delayed_trace = copy(self)
+        delayed_trace.clear()
+        delayed_trace.extend([Sample(t + delta, v) for t, v in self])
         return delayed_trace
 
     def extend_duration(self, start_time, end_time):
@@ -153,29 +161,29 @@ class Trace(list):
         if end_time > self[-1].time:
             self.append(Sample(end_time, self[-1].value))
 
-    def collapse_time_repeats(trc):
+    def collapse_time_repeats(self):
         """Return trace with samples having the same sampling time collapsed into a single sample."""
-        trace = copy(trc)
+        trace = copy(self)
         trace.clear()
 
         # Build the trace backwards, moving from the newest to the oldest sample.
         # Accept only samples having a time < the most recently accepted sample.
-        trace.append(trc[-1])
-        for sample in trc[-1::-1]:
+        trace.append(self[-1])
+        for sample in self[-1::-1]:
             if sample.time < trace[0].time:
                 trace.insert(0, sample)
 
         return trace
 
-    def collapse_value_repeats(trc):
+    def collapse_value_repeats(self):
         """Return trace with consecutive samples having the same value collapsed into a single sample."""
-        trace = copy(trc)
+        trace = copy(self)
         trace.clear()
 
         # Build the trace forwards, removing any samples with the same
         # value as the previous sample.
-        trace.append(trc[0])
-        for sample in trc[1:]:
+        trace.append(self[0])
+        for sample in self[1:]:
             if sample.value != trace[-1].value:
                 trace.append(sample)
 
@@ -198,8 +206,8 @@ class Trace(list):
 
     def add_slope(self):
         """Return a trace with slope added to trace transitions."""
-        delay = 0.1 * self.unit_time
-        return self.add_rise_fall(2 * delay).delay(delay)
+        slope = max(self.slope, 0.0001) * self.unit_time  # Don't let slope go to 0.
+        return self.add_rise_fall(slope).delay(slope/2)
 
     def binarize(self):
         """Return trace of sample values set to 1 (if true) or 0 (if false)."""
@@ -366,8 +374,12 @@ class Trace(list):
         """Return list of times trace value is true (non-zero)."""
         return [sample.time for sample in self if sample.value]
 
-    def to_matplotlib(self, subplot, start_time, stop_time, xlim=None):
+    def to_matplotlib(self, subplot, start_time, stop_time, xlim=None, **kwargs):
         """Fill a matplotlib subplot for a trace between the start & stop times."""
+
+        # Copy trace and apply formatting to the copy.
+        trace = copy(self)
+        trace.config(**kwargs)
 
         # Set the X axis limits to clip the trace duration to the desired limits.
         if not xlim:
@@ -381,7 +393,7 @@ class Trace(list):
         ylbl_position = dict(
             rotation=0, horizontalalignment="right", verticalalignment="center", x=-0.01
         )
-        subplot.set_ylabel(self.name, ylbl_position, **self.name_fmt)
+        subplot.set_ylabel(trace.name, ylbl_position, **trace.name_fmt)
 
         # Remove ticks from Y axis.
         subplot.set_yticks([])
@@ -394,7 +406,7 @@ class Trace(list):
         subplot.spines["bottom"].set_visible(False)
 
         # Copy the trace while removing any consecutively-repeated values.
-        trace = self.collapse_value_repeats()
+        trace = trace.collapse_value_repeats()
 
         # Insert samples for beginning/end times into a copy of the trace data.
         trace.insert_sample(Sample(start_time, self.get_value(start_time)))
@@ -434,14 +446,15 @@ class Trace(list):
                     val,
                     horizontalalignment="center",
                     verticalalignment="center",
-                    **self.data_fmt
+                    **trace.data_fmt
                 )
                 time0 = time1
                 if time0 >= stop_time:
                     break
 
             # Create a binary trace that toggles whenever the bus trace changes values.
-            tgl_trace = Trace()
+            tgl_trace = copy(trace)
+            tgl_trace.clear()
             value = 0
             for time in chg_times:
                 tgl_trace.store_sample(value, time)
@@ -457,14 +470,20 @@ class Trace(list):
             x = [sample.time for sample in tgl_trace]
             y = [sample.value for sample in tgl_trace]
             y_bar = [sample.value for sample in bar_trace]
-            subplot.plot(x, y, self.line_fmt, x, y_bar, self.line_fmt, **self.line2D)
+            if isinstance(trace.line_fmt, dict):
+                subplot.plot(x, y, x, y_bar, **trace.line_fmt)
+            else:
+                subplot.plot(x, y, trace.line_fmt, x, y_bar, trace.line_fmt)
 
         else:
             # Binary trace.
             trace = trace.add_slope()
             x = [sample.time for sample in trace]
             y = [sample.value for sample in trace]
-            subplot.plot(x, y, self.line_fmt, **self.line2D)
+            if isinstance(trace.line_fmt, dict):
+                subplot.plot(x, y, **trace.line_fmt)
+            else:
+                subplot.plot(x, y, trace.line_fmt)
 
     def to_wavejson(self, start_time, stop_time):
         """Generate the WaveJSON data for a trace between the start & stop times."""
@@ -703,28 +722,28 @@ def traces_to_matplotlib(*traces, **kwargs):
     cycle_wid = 0.5  # Default unit cycle width in inches.
 
     # Handle keyword args explicitly for Python 2 compatibility.
-    start_time = kwargs.get(
+    start_time = kwargs.pop(
         "start_time",
         min([trace.start_time() for trace in traces if isinstance(trace, Trace)]),
     )
-    stop_time = kwargs.get(
+    stop_time = kwargs.pop(
         "stop_time",
         max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]),
     )
-    title = kwargs.get("title", "")
+    title = kwargs.pop("title", "")
     title_fmt = {'fontweight': 'bold'}
-    title_fmt.update(kwargs.get('title_fmt', {}))
-    caption = kwargs.get("caption", "")
+    title_fmt.update(kwargs.pop('title_fmt', {}))
+    caption = kwargs.pop("caption", "")
     caption_fmt = {'fontstyle': 'oblique'}
-    caption_fmt.update(kwargs.get('caption_fmt', {}))
-    tick = kwargs.get("tick", False)
-    tock = kwargs.get("tock", False)
+    caption_fmt.update(kwargs.pop('caption_fmt', {}))
+    tick = kwargs.pop("tick", False)
+    tock = kwargs.pop("tock", False)
     grid_fmt = {'color':'C1', 'alpha':1.0}
-    grid_fmt.update(kwargs.get('grid_fmt', {}))
+    grid_fmt.update(kwargs.pop('grid_fmt', {}))
     time_fmt = {}
-    time_fmt.update(kwargs.get('time_fmt', {}))
-    width = kwargs.get("width", (stop_time - start_time)/Trace.unit_time * cycle_wid)
-    height = kwargs.get("height", num_traces * trace_hgt)
+    time_fmt.update(kwargs.pop('time_fmt', {}))
+    width = kwargs.pop("width", (stop_time - start_time)/Trace.unit_time * cycle_wid)
+    height = kwargs.pop("height", num_traces * trace_hgt)
 
     # Create separate plot traces for each selected waveform.
     trace_hgt_pctg = 1.0 / num_traces
@@ -785,7 +804,7 @@ def traces_to_matplotlib(*traces, **kwargs):
             axis.spines["top"].set_visible(False)
             axis.spines["bottom"].set_visible(False)
         else:
-            trace.to_matplotlib(axis, start_time, stop_time, xlim)
+            trace.to_matplotlib(axis, start_time, stop_time, xlim, **kwargs)
 
 
 def wavejson_to_wavedrom(wavejson, width=None, skin="default"):

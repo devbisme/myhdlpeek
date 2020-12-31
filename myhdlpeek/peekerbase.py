@@ -267,6 +267,11 @@ class PeekerBase(object):
         DISP.display_html(DISP.HTML(tbl_html))
 
     @classmethod
+    def get(cls, name):
+        cls._clean_names()
+        return cls.peekers.get(name)
+
+    @classmethod
     def to_matplotlib(cls, *names, **kwargs):
         """
         Convert waveforms stored in peekers into a matplotlib plot.
@@ -306,7 +311,7 @@ class PeekerBase(object):
             names = _sort_names(cls.peekers.keys())
 
         # Collect all the Peekers matching the names.
-        peekers = [cls.peekers.get(name) for name in names]
+        peekers = [cls.get(name) for name in names]
         traces = [getattr(p, "trace", None) for p in peekers]
         traces_to_matplotlib(*traces, **kwargs)
 

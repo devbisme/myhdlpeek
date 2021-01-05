@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 
 author = "XESS Corp."
 email = "info@xess.com"
-version = "0.0.8"
+version = "0.0.9"
 
 if "sdist" in sys.argv[1:]:
     with open("myhdlpeek/pckg_info.py", "w") as f:
@@ -30,6 +30,7 @@ requirements = [
     # Put package requirements here
     "future >= 0.15.0",
     "myhdl",
+    "nmigen",
     "tabulate",
     "pandas",
     "nbwavedrom",

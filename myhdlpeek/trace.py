@@ -8,7 +8,7 @@ import json
 import math
 import operator
 from builtins import dict, int, str, super
-from collections import namedtuple
+from collections import namedtuple, Counter
 from copy import copy
 
 import IPython.display as DISP
@@ -65,14 +65,8 @@ class Trace(list):
         for k, v in kwargs.items():
             if k not in cls.trace_fields:
                 continue
-            if isinstance(v, dict):
-                setattr(cls, k, getattr(cls, k, {}))
-                try:
-                    getattr(cls, k).update(v)
-                except AttributeError:
-                    setattr(cls, k, v)
-            else:
-                setattr(cls, k, v)
+            setattr(cls, k, copy(v))
+
         for k in cls.trace_fields:
             kwargs.pop(k, None)  # Remove the keyword arg.
 
@@ -136,6 +130,19 @@ class Trace(list):
 
         # Return the signal value immediately BEFORE the insertion index.
         return self[max(0, self.get_index(time) - 1)].value
+
+    def get_disp_value(self, time, **kwargs):
+        """Get the displayed trace value at an arbitrary time."""
+
+        # Get the function for displaying the trace's value, first from kwargs or else from trace data_fmt attr.
+        data_fmt = kwargs.get('data_fmt', getattr(self, 'data_fmt'))
+        repr = data_fmt.get('repr', str)
+
+        val = self.get_value(time)
+        try:
+            return repr(val)
+        except (TypeError, ValueError):
+            return str(val)
 
     def get_sample_times(self, **kwargs):
         """Return list of times at which the trace was sampled."""
@@ -424,6 +431,13 @@ class Trace(list):
         if trace.num_bits > 1:
             # Multi-bit bus trace.
 
+            # Get the function for displaying the bus value.
+            repr = trace.data_fmt.get('repr', str)
+
+            # Copy data format with repr function removed because matplotlib won't like it.
+            data_fmt = copy(trace.data_fmt)
+            data_fmt.pop('repr',None)
+
             # Get list of times the bus changes values.
             chg_times = [sample.time for sample in trace]
 
@@ -437,7 +451,7 @@ class Trace(list):
                     continue
                 if time1 > stop_time:
                     time1 = stop_time
-                val = str(trace.get_value(time0))
+                val = trace.get_disp_value(time0, **kwargs)
                 text_x = (time1 + time0) / 2
                 text_y = 0.5
                 subplot.text(
@@ -446,7 +460,7 @@ class Trace(list):
                     val,
                     horizontalalignment="center",
                     verticalalignment="center",
-                    **trace.data_fmt
+                    **data_fmt  # Use local data_fmt dict with repr removed.
                 )
                 time0 = time1
                 if time0 >= stop_time:
@@ -563,6 +577,20 @@ class Trace(list):
 # Functions for handling multiple traces follow...
 ###############################################################################
 
+def calc_unit_time(*traces):
+    """Calculate and return the unit time between trace samples."""
+    intervals = Counter()
+    for trace in traces:
+        times = sorted(trace.collapse_time_repeats().collapse_value_repeats().get_sample_times())
+        intervals.update([t[1]-t[0] for t in zip(times[:-1], times[1:])])
+    most_common_interval = intervals.most_common(1)[0][0]
+    min_interval = min(intervals.keys())
+    ratio = most_common_interval / min_interval
+    if math.isclose(round(ratio), ratio, abs_tol=0.01):
+        return min_interval
+    raise Exception('Unable to determine the unit_time for the set of Traces.'
+        'Manually set it using Peeker.unit_time = <simulation step time>.')
+
 
 def _get_sample_times(*traces, **kwargs):
     """Get sample times for all the traces."""
@@ -620,7 +648,7 @@ def traces_to_dataframe(*traces, **kwargs):
     times = _get_sample_times(*traces, **kwargs)
 
     # Create dict of trace sample lists.
-    trace_data = {tr.name: [tr.get_value(t) for t in times] for tr in traces}
+    trace_data = {tr.name: [tr.get_disp_value(t, **kwargs) for t in times] for tr in traces}
 
     # Return a DataFrame where each column is a trace and time is the index.
     return pd.DataFrame(trace_data, index=times)
@@ -654,7 +682,7 @@ def traces_to_table_data(*traces, **kwargs):
     # is the sample time and the following elements are the trace values.
     table_data = list()
     for time in times:
-        row = [trace.get_value(time) for trace in traces]
+        row = [trace.get_disp_value(time, **kwargs) for trace in traces]
         row.insert(0, time)
         table_data.append(row)
     headers = ["Time"] + [trace.name for trace in traces]
@@ -662,10 +690,7 @@ def traces_to_table_data(*traces, **kwargs):
 
 
 def traces_to_table(*traces, **kwargs):
-    if "format" in kwargs:
-        format = kwargs["format"]
-    else:
-        format = "simple"
+    format = kwargs.get('format', 'simple')
     table_data, headers = traces_to_table_data(*traces, **kwargs)
     return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)
 
@@ -714,7 +739,7 @@ def traces_to_matplotlib(*traces, **kwargs):
             height: The height of the waveform display in inches.
 
         Returns:
-            Nothing.
+            Figure and axes created by matplotlib.pyplot.subplots.
     """
 
     num_traces = len(traces)
@@ -805,6 +830,9 @@ def traces_to_matplotlib(*traces, **kwargs):
             axis.spines["bottom"].set_visible(False)
         else:
             trace.to_matplotlib(axis, start_time, stop_time, xlim, **kwargs)
+
+    # Return figure and axes for possible further processing.
+    return fig, axes
 
 
 def wavejson_to_wavedrom(wavejson, width=None, skin="default"):

@@ -28,7 +28,7 @@ class PeekerBase(object):
     USE_JUPYTER = False
     USE_WAVEDROM = False
 
-    unit_time = 1  # Time interval for a single tick-mark span.
+    unit_time = None  # Time interval for a single tick-mark span.
 
     def __new__(cls, *args, **kwargs):
         # Keep PeekerBase from being instantiated.
@@ -76,11 +76,9 @@ class PeekerBase(object):
         cls.USE_WAVEDROM = kwargs.pop('use_wavedrom', cls.USE_WAVEDROM)
         if cls.USE_WAVEDROM:
             cls.show_waveforms = cls.to_wavedrom
-            # PeekerGroup.show_waveforms = PeekerGroup.to_matplotlib
             cls.show_traces = traces_to_wavedrom
         else:
             cls.show_waveforms = cls.to_matplotlib
-            # PeekerGroup.show_waveforms = PeekerGroup.to_wavedrom
             cls.show_traces = traces_to_matplotlib
 
         # Create an intermediary function to call cls.show_waveforms and assign it to show_waveforms.
@@ -89,12 +87,12 @@ class PeekerBase(object):
         # code that calls show_waveforms() would always call the initially-assigned function even if
         # cls.show_waveforms got a different assignment later.
         def shw_wvfrms(*args, **kwargs):
-            cls.show_waveforms(*args, **kwargs)
+            return cls.show_waveforms(*args, **kwargs)
 
         show_waveforms = shw_wvfrms
 
         def shw_trcs(*args, **kwargs):
-            cls.show_traces(*args, **kwargs)
+            return cls.show_traces(*args, **kwargs)
 
         show_traces = shw_trcs
 
@@ -109,12 +107,7 @@ class PeekerBase(object):
 
         # Remaining keyword args.
         for k, v in kwargs.items():
-            if isinstance(v, dict):
-                setattr(cls, k, getattr(cls, k, {}))
-                getattr(cls, k).update(v)
-            else:
-                setattr(cls, k, copy(v))
-
+            setattr(cls, k, copy(v))
 
     def config(self, **kwargs):
         """
@@ -136,12 +129,14 @@ class PeekerBase(object):
     def clear(cls):
         """Clear the global list of Peekers."""
         cls.peekers = dict()
+        cls.unit_time = None
 
     @classmethod
     def clear_traces(cls):
         """Clear waveform samples from the global list of Peekers."""
         for p in cls.peekers.values():
             p.trace.clear()
+        cls.unit_time = None
 
     @classmethod
     def start_time(cls):
@@ -268,8 +263,15 @@ class PeekerBase(object):
 
     @classmethod
     def get(cls, name):
+        '''Return the Peeker having the given name.'''
         cls._clean_names()
         return cls.peekers.get(name)
+
+    @classmethod
+    def get_traces(cls):
+        '''Return a list of all the traces in the available Peekers.'''
+        traces = [getattr(p, "trace", None) for p in cls.peekers.values()]
+        return [trc for trc in traces if trc is not None]
 
     @classmethod
     def to_matplotlib(cls, *names, **kwargs):
@@ -296,10 +298,12 @@ class PeekerBase(object):
             height: The height of the waveform display in inches.
 
         Returns:
-            Nothing.
+            Figure and axes created by matplotlib.pyplot.subplots.
         """
 
         cls._clean_names()
+        if cls.unit_time is None:
+            cls.unit_time = calc_unit_time(*cls.get_traces())
         Trace.unit_time = cls.unit_time
 
         if names:
@@ -313,7 +317,7 @@ class PeekerBase(object):
         # Collect all the Peekers matching the names.
         peekers = [cls.get(name) for name in names]
         traces = [getattr(p, "trace", None) for p in peekers]
-        traces_to_matplotlib(*traces, **kwargs)
+        return traces_to_matplotlib(*traces, **kwargs)
 
     @classmethod
     def to_wavejson(cls, *names, **kwargs):
@@ -338,6 +342,8 @@ class PeekerBase(object):
         """
 
         cls._clean_names()
+        if cls.unit_time is None:
+            cls.unit_time = calc_unit_time(*cls.get_traces())
         Trace.unit_time = cls.unit_time
 
         if names:
@@ -470,117 +476,6 @@ class PeekerBase(object):
     def trig_times(self):
         """Return list of times trace value is true (non-zero)."""
         return self.trace.trig_times()
-
-
-class PeekerGroup(dict):
-    def __init__(self, **kwargs):
-        super().__init__()
-        for name, signal in kwargs.items():
-            peeker = Peeker(signal, name)
-            self[name] = peeker
-            setattr(self, name, peeker)
-
-    def to_table(self, *names, **kwargs):
-
-        format = kwargs.get("format", "simple")
-
-        if names:
-            # Go through the provided names and split any containing spaces
-            # into individual names.
-            names = [nm for name in names for nm in name.split()]
-        else:
-            # If no names provided, use all the peekers in this group.
-            names = self.keys()
-
-        PeekerBase._clean_names()
-        peeker_names = [self[n].trace.name for n in names]
-
-        return PeekerBase.to_table(*peeker_names, **kwargs)
-
-    def to_text_table(self, *names, **kwargs):
-        if "format" not in kwargs:
-            kwargs["format"] = "simple"
-        print(self.to_table(*names, **kwargs))
-
-    def to_html_table(self, *names, **kwargs):
-        kwargs["format"] = "html"
-        tbl_html = self.to_table(*names, **kwargs)
-
-        # Generate the HTML from the JSON.
-        DISP.display_html(DISP.HTML(tbl_html))
-
-    def to_matplotlib(self, *names, **kwargs):
-        """
-        Display waveforms stored in peekers in Jupyter notebook.
-
-        Args:
-            *names: A list of strings containing the names for the Peekers that
-                will be displayed. A string may contain multiple,
-                space-separated names.
-
-        Keywords Args:
-            start_time: The earliest (left-most) time bound for the waveform display.
-            stop_time: The latest (right-most) time bound for the waveform display.
-            title: String containing the title placed across the top of the display.
-            title_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
-            caption: String containing the title placed across the bottom of the display.
-            caption_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
-            tick: If true, times are shown at the tick marks of the display.
-            tock: If true, times are shown between the tick marks of the display.
-            grid_fmt (dict): https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
-            time_fmt (dict): https://matplotlib.org/3.2.1/api/text_api.html#matplotlib.text.Text
-            width: The width of the waveform display in inches.
-            height: The height of the waveform display in inches.
-
-        Returns:
-            Nothing.
-        """
-
-        if names:
-            # Go through the provided names and split any containing spaces
-            # into individual names.
-            names = [nm for name in names for nm in name.split()]
-        else:
-            # If no names provided, use all the peekers in this group.
-            names = self.keys()
-
-        PeekerBase._clean_names()
-        peeker_names = [self[n].trace.name for n in names]
-        PeekerBase.to_matplotlib(*peeker_names, **kwargs)
-
-    def to_wavedrom(self, *names, **kwargs):
-        """
-        Display waveforms stored in peekers in Jupyter notebook.
-
-        Args:
-            *names: A list of strings containing the names for the Peekers that
-                will be displayed. A string may contain multiple,
-                space-separated names.
-
-        Keywords Args:
-            start_time: The earliest (left-most) time bound for the waveform display.
-            stop_time: The latest (right-most) time bound for the waveform display.
-            title: String containing the title placed across the top of the display.
-            caption: String containing the caption placed across the bottom of the display.
-            tick: If true, times are shown at the tick marks of the display.
-            tock: If true, times are shown between the tick marks of the display.
-            width: The width of the waveform display in pixels.
-
-        Returns:
-            Nothing.
-        """
-
-        if names:
-            # Go through the provided names and split any containing spaces
-            # into individual names.
-            names = [nm for name in names for nm in name.split()]
-        else:
-            # If no names provided, use all the peekers in this group.
-            names = self.keys()
-
-        PeekerBase._clean_names()
-        peeker_names = [self[n].trace.name for n in names]
-        PeekerBase.to_wavedrom(*peeker_names, **kwargs)
 
 
 def _sort_names(names):

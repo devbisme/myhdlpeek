@@ -44,7 +44,7 @@ test_requirements = [
 setup(
     name="myhdlpeek",
     version=version,
-    description="Peek at signals in a MyHDL digital system simulation.",
+    description="Peek at signals in a MyHDL or nMigen digital system simulation.",
     long_description=readme + "\n\n" + history,
     author=author,
     author_email=email,

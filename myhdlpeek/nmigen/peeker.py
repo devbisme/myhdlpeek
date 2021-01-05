@@ -8,7 +8,6 @@ import functools
 from builtins import dict, int, str, super
 
 from future import standard_library
-
 from nmigen.sim import Tick
 
 from ..peekerbase import *
@@ -45,9 +44,11 @@ class Peeker(PeekerBase):
             def peek_process():
                 while True:
                     for peeker in cls.peekers.values():
-                        peeker.trace.store_sample((yield peeker.signal), simulator._engine.now)
+                        peeker.trace.store_sample(
+                            (yield peeker.signal), simulator._engine.now
+                        )
                     yield Tick()
-    
+
             simulator.add_process(peek_process)
 
     @classmethod

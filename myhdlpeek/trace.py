@@ -8,7 +8,7 @@ import json
 import math
 import operator
 from builtins import dict, int, str, super
-from collections import namedtuple, Counter
+from collections import Counter, namedtuple
 from copy import copy
 
 import IPython.display as DISP
@@ -43,7 +43,7 @@ class Trace(list):
 
     slope = 0.20  # trace transition slope as % of unit_time.
 
-    trace_fields = ['line_fmt', 'name_fmt', 'data_fmt', 'slope']
+    trace_fields = ["line_fmt", "name_fmt", "data_fmt", "slope"]
 
     def __init__(self, *args, **kwargs):
         self.config(**kwargs)
@@ -135,8 +135,8 @@ class Trace(list):
         """Get the displayed trace value at an arbitrary time."""
 
         # Get the function for displaying the trace's value, first from kwargs or else from trace data_fmt attr.
-        data_fmt = kwargs.get('data_fmt', getattr(self, 'data_fmt'))
-        repr = data_fmt.get('repr', str)
+        data_fmt = kwargs.get("data_fmt", getattr(self, "data_fmt"))
+        repr = data_fmt.get("repr", str)
 
         val = self.get_value(time)
         try:
@@ -214,7 +214,7 @@ class Trace(list):
     def add_slope(self):
         """Return a trace with slope added to trace transitions."""
         slope = max(self.slope, 0.0001) * self.unit_time  # Don't let slope go to 0.
-        return self.add_rise_fall(slope).delay(slope/2)
+        return self.add_rise_fall(slope).delay(slope / 2)
 
     def binarize(self):
         """Return trace of sample values set to 1 (if true) or 0 (if false)."""
@@ -432,11 +432,11 @@ class Trace(list):
             # Multi-bit bus trace.
 
             # Get the function for displaying the bus value.
-            repr = trace.data_fmt.get('repr', str)
+            repr = trace.data_fmt.get("repr", str)
 
             # Copy data format with repr function removed because matplotlib won't like it.
             data_fmt = copy(trace.data_fmt)
-            data_fmt.pop('repr',None)
+            data_fmt.pop("repr", None)
 
             # Get list of times the bus changes values.
             chg_times = [sample.time for sample in trace]
@@ -544,7 +544,7 @@ class Trace(list):
                 time = stop_time  # Extend it to the end of the window.
 
             # Replicate the sample's previous value up to the current time.
-            wave_str += "." * (round((time - prev_time)/self.unit_time) - 1)
+            wave_str += "." * (round((time - prev_time) / self.unit_time) - 1)
 
             # Add the current sample's value to the waveform.
 
@@ -577,19 +577,24 @@ class Trace(list):
 # Functions for handling multiple traces follow...
 ###############################################################################
 
+
 def calc_unit_time(*traces):
     """Calculate and return the unit time between trace samples."""
     intervals = Counter()
     for trace in traces:
-        times = sorted(trace.collapse_time_repeats().collapse_value_repeats().get_sample_times())
-        intervals.update([t[1]-t[0] for t in zip(times[:-1], times[1:])])
+        times = sorted(
+            trace.collapse_time_repeats().collapse_value_repeats().get_sample_times()
+        )
+        intervals.update([t[1] - t[0] for t in zip(times[:-1], times[1:])])
     most_common_interval = intervals.most_common(1)[0][0]
     min_interval = min(intervals.keys())
     ratio = most_common_interval / min_interval
     if math.isclose(round(ratio), ratio, abs_tol=0.01):
         return min_interval
-    raise Exception('Unable to determine the unit_time for the set of Traces.'
-        'Manually set it using Peeker.unit_time = <simulation step time>.')
+    raise Exception(
+        "Unable to determine the unit_time for the set of Traces."
+        "Manually set it using Peeker.unit_time = <simulation step time>."
+    )
 
 
 def _get_sample_times(*traces, **kwargs):
@@ -648,7 +653,9 @@ def traces_to_dataframe(*traces, **kwargs):
     times = _get_sample_times(*traces, **kwargs)
 
     # Create dict of trace sample lists.
-    trace_data = {tr.name: [tr.get_disp_value(t, **kwargs) for t in times] for tr in traces}
+    trace_data = {
+        tr.name: [tr.get_disp_value(t, **kwargs) for t in times] for tr in traces
+    }
 
     # Return a DataFrame where each column is a trace and time is the index.
     return pd.DataFrame(trace_data, index=times)
@@ -690,7 +697,7 @@ def traces_to_table_data(*traces, **kwargs):
 
 
 def traces_to_table(*traces, **kwargs):
-    format = kwargs.get('format', 'simple')
+    format = kwargs.get("format", "simple")
     table_data, headers = traces_to_table_data(*traces, **kwargs)
     return tabulate(tabular_data=table_data, headers=headers, tablefmt=format)
 
@@ -756,18 +763,18 @@ def traces_to_matplotlib(*traces, **kwargs):
         max([trace.stop_time() for trace in traces if isinstance(trace, Trace)]),
     )
     title = kwargs.pop("title", "")
-    title_fmt = {'fontweight': 'bold'}
-    title_fmt.update(kwargs.pop('title_fmt', {}))
+    title_fmt = {"fontweight": "bold"}
+    title_fmt.update(kwargs.pop("title_fmt", {}))
     caption = kwargs.pop("caption", "")
-    caption_fmt = {'fontstyle': 'oblique'}
-    caption_fmt.update(kwargs.pop('caption_fmt', {}))
+    caption_fmt = {"fontstyle": "oblique"}
+    caption_fmt.update(kwargs.pop("caption_fmt", {}))
     tick = kwargs.pop("tick", False)
     tock = kwargs.pop("tock", False)
-    grid_fmt = {'color':'C1', 'alpha':1.0}
-    grid_fmt.update(kwargs.pop('grid_fmt', {}))
+    grid_fmt = {"color": "C1", "alpha": 1.0}
+    grid_fmt.update(kwargs.pop("grid_fmt", {}))
     time_fmt = {}
-    time_fmt.update(kwargs.pop('time_fmt', {}))
-    width = kwargs.pop("width", (stop_time - start_time)/Trace.unit_time * cycle_wid)
+    time_fmt.update(kwargs.pop("time_fmt", {}))
+    width = kwargs.pop("width", (stop_time - start_time) / Trace.unit_time * cycle_wid)
     height = kwargs.pop("height", num_traces * trace_hgt)
 
     # Create separate plot traces for each selected waveform.
@@ -789,24 +796,30 @@ def traces_to_matplotlib(*traces, **kwargs):
     axes[0].set_title(title, **title_fmt)
 
     # Set X-axis ticks at the bottom of the stack of traces.
-    start = math.floor(start_time/Trace.unit_time)
-    stop = math.ceil(stop_time/Trace.unit_time)
+    start = math.floor(start_time / Trace.unit_time)
+    stop = math.ceil(stop_time / Trace.unit_time)
     axes[-1].tick_params(axis="x", length=0, which="both")  # No tick marks.
     # Set positions of tick marks so grid lines will work.
-    axes[-1].set_xticks([x*Trace.unit_time for x in range(start, stop + 1)], minor=False)
-    axes[-1].set_xticks([(x + 0.5)*Trace.unit_time for x in range(start, stop)], minor=True)
+    axes[-1].set_xticks(
+        [x * Trace.unit_time for x in range(start, stop + 1)], minor=False
+    )
+    axes[-1].set_xticks(
+        [(x + 0.5) * Trace.unit_time for x in range(start, stop)], minor=True
+    )
     # Place cycle times at tick marks or between them.
     if not tick:
         axes[-1].set_xticklabels([], minor=False, **time_fmt)
     if tock:
-        axes[-1].set_xticklabels([str(x) for x in range(start, stop)], minor=True, **time_fmt)
+        axes[-1].set_xticklabels(
+            [str(x) for x in range(start, stop)], minor=True, **time_fmt
+        )
 
     # Adjust the limits of the X axis so the grid doesn't get chopped-off and
     # produce artifacts if a grid line is at the right or left edge.
     bbox = axes[-1].get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     width_in_pixels = bbox.width * fig.dpi
     time_per_pixel = (stop_time - start_time) / width_in_pixels
-    xlim = (start_time-time_per_pixel, stop_time+time_per_pixel)
+    xlim = (start_time - time_per_pixel, stop_time + time_per_pixel)
 
     # Plot each trace waveform.
     for i, (trace, axis) in enumerate(zip(traces, axes), 1):

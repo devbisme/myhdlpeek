@@ -73,7 +73,7 @@ class PeekerBase(object):
 
         global clear_traces, show_traces, show_waveforms, show_text_table, show_html_table, export_dataframe
 
-        cls.USE_WAVEDROM = kwargs.pop('use_wavedrom', cls.USE_WAVEDROM)
+        cls.USE_WAVEDROM = kwargs.pop("use_wavedrom", cls.USE_WAVEDROM)
         if cls.USE_WAVEDROM:
             cls.show_waveforms = cls.to_wavedrom
             cls.show_traces = traces_to_wavedrom
@@ -103,7 +103,7 @@ class PeekerBase(object):
         show_text_table = cls.to_text_table
         show_html_table = cls.to_html_table
 
-        cls.USE_JUPYTER = kwargs.pop('use_jupyter', cls.USE_JUPYTER)
+        cls.USE_JUPYTER = kwargs.pop("use_jupyter", cls.USE_JUPYTER)
 
         # Remaining keyword args.
         for k, v in kwargs.items():
@@ -263,13 +263,13 @@ class PeekerBase(object):
 
     @classmethod
     def get(cls, name):
-        '''Return the Peeker having the given name.'''
+        """Return the Peeker having the given name."""
         cls._clean_names()
         return cls.peekers.get(name)
 
     @classmethod
     def get_traces(cls):
-        '''Return a list of all the traces in the available Peekers.'''
+        """Return a list of all the traces in the available Peekers."""
         traces = [getattr(p, "trace", None) for p in cls.peekers.values()]
         return [trc for trc in traces if trc is not None]
 

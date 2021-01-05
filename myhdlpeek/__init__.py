@@ -7,3 +7,4 @@ from .pckg_info import version
 # If you just import top-level myhdlpeek, then you'll get the MyHDL version
 # of the Peeker. 
 from .myhdl import *
+

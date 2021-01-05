@@ -7,7 +7,8 @@ History
 0.0.9 (2021-01-05)
 ______________________
 
-* 
+* Added support for nMigen.
+* Waveforms can now be drawn using wavedrom or matplotlib.
 
 
 0.0.8 (2018-09-25)

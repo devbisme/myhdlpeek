@@ -4,6 +4,12 @@ History
 -------
 
 
+0.0.10 (2021-07-06)
+______________________
+
+* Moved ownership from xesscorp to devbisme (Dave Vandenbout).
+
+
 0.0.9 (2021-01-05)
 ______________________
 

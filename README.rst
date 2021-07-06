@@ -20,13 +20,13 @@ with a single command.
 You can also select which signals are shown, set the beginning and
 ending times of the display, and much more.
 
-`[This Jupyter notebook] <https://github.com/xesscorp/myhdlpeek/blob/master/examples/complete.ipynb>`_ 
+`[This Jupyter notebook] <https://github.com/devbisme/myhdlpeek/blob/master/examples/complete.ipynb>`_ 
 shows how to use myhdlpeek.
 
 |
 
 * Free software: MIT license
-* Documentation: http://xesscorp.github.io/myhdlpeek
+* Documentation: http://devbisme.github.io/myhdlpeek
 
 Features
 --------

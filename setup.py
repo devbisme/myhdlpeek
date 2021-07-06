@@ -5,9 +5,9 @@ from os import sys
 
 from setuptools import find_packages, setup
 
-author = "XESS Corp."
+author = "Dave Vandenbout"
 email = "info@xess.com"
-version = "0.0.9"
+version = "0.0.10"
 
 if "sdist" in sys.argv[1:]:
     with open("myhdlpeek/pckg_info.py", "w") as f:
@@ -48,7 +48,7 @@ setup(
     long_description=readme + "\n\n" + history,
     author=author,
     author_email=email,
-    url="https://github.com/xesscorp/myhdlpeek",
+    url="https://github.com/devbisme/myhdlpeek",
     #    packages=['myhdlpeek',],
     packages=find_packages(exclude=["tests"]),
     entry_points={"console_scripts": ["myhdlpeek = myhdlpeek.__main__:main"]},

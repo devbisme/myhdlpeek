@@ -55,15 +55,12 @@ docs:
 	sphinx-apidoc -o docs/ myhdlpeek
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs singlehtml
-	open docs/_build/html/index.html
 
 release: clean
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+	python setup.py sdist
 
 dist: clean
 	python setup.py sdist
-	python setup.py bdist_wheel
 	ls -l dist
 
 install: clean

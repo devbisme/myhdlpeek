@@ -6,7 +6,7 @@ from os import sys
 from setuptools import find_packages, setup
 
 author = "Dave Vandenbout"
-email = "info@xess.com"
+email = "devb@xess.com"
 version = "0.0.10"
 
 if "sdist" in sys.argv[1:]:

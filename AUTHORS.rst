@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* XESS Corp. <info@xess.com>
+* Dave Vandenbout <devb@xess.com>
 
 Contributors
 ------------

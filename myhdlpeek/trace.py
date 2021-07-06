@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017-2020, XESS Corp. The MIT License (MIT).
+# Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 

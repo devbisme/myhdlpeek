@@ -54,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'myhdlpeek'
-copyright = u'2017, XESS Corp.'
+copyright = u'2017-2021, Dave Vandenbout.'
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout

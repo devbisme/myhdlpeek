@@ -7,14 +7,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import functools
 from builtins import dict, int, str, super
 
-from future import standard_library
-from myhdl import EnumItemType, SignalType, always_comb, now
+from myhdl import EnumItemType, SignalType, intbv,  always_comb, now
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL
 
 from ..peekerbase import *
 
-standard_library.install_aliases()
 
 
 class Peeker(PeekerBase):
@@ -53,9 +51,12 @@ class Peeker(PeekerBase):
                 if self.trace.num_bits == 0:
                     if isinstance(signal.val, bool):
                         self.trace.num_bits = 1
-                    elif isinstance(signal.val, integer_types):
-                        # Gotta pick some width for integers. This sounds good.
-                        self.trace.num_bits = 32
+                    elif isinstance(signal.val, int):
+                        #repersent an int by 2's compliment length
+                        self.trace.num_bits = signal.val.bit_length()+1
+                    elif isinstance(signal.val, intbv):
+                        #if intbv then used the asigned bits
+                        self.trace.num_bits = signal.val._nrbits
                     else:
                         # Unknown type of value. Just give it this width and hope.
                         self.trace.num_bits = 32

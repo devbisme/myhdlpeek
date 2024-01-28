@@ -19,7 +19,6 @@ from tabulate import tabulate
 
 from .trace import *
 
-standard_library.install_aliases()
 
 
 class PeekerBase(object):

@@ -1,46 +1,45 @@
 # -*- coding: utf-8 -*-
-
 # Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
-
 from __future__ import absolute_import, division, print_function, unicode_literals
-
 import functools
 from builtins import dict, int, str, super
-
 from myhdl import EnumItemType, SignalType, intbv,  always_comb, now
 from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL
-
 from ..peekerbase import *
 
-
-
 class Peeker(PeekerBase):
-    def __init__(self, signal, name):
+    """Extends the PeekerBase to create an object that peeks or monitors a signal for use with myhdl."""
 
+    def __init__(self, signal, name):
+        """
+        Instantiates a new Peeker object if not converting to VHDL or Verilog.
+
+        Args:
+            signal (mydhl SignalType): The myhdl signal to be monitored.
+            name (str): The name of the Peeker object.
+
+        Note:
+            This method creates a new instance of a peeker module that triggers
+            whenever the signal changes, and sets the width of the signal.
+        """
         if _toVerilog._converting or _toVHDL._converting:
             # Don't create a peeker when converting to VHDL or Verilog.
             pass
-
         else:
-
             # Check to see if a signal is being monitored.
             if not isinstance(signal, SignalType):
                 raise Exception(
                     "Can't add Peeker {name} to a non-Signal!".format(name=name)
                 )
-
             super().__init__(signal, name)
-
             # Create combinational module that triggers when signal changes.
             @always_comb
             def peeker_logic():
-                # Store signal value and sim timestamp.
+                """Stores the value of the signal and the current simulation timestamp."""
                 self.trace.store_sample(signal.val, now())
-
             # Instantiate the peeker module.
             self.instance = peeker_logic
-
             # Set the width of the signal.
             if isinstance(signal.val, EnumItemType):
                 # For enums, set the width to always be greater than 1 so the
@@ -52,10 +51,10 @@ class Peeker(PeekerBase):
                     if isinstance(signal.val, bool):
                         self.trace.num_bits = 1
                     elif isinstance(signal.val, int):
-                        #repersent an int by 2's compliment length
+                        #represent an int by 2's compliment length
                         self.trace.num_bits = signal.val.bit_length()+1
                     elif isinstance(signal.val, intbv):
-                        #if intbv then used the asigned bits
+                        #if intbv then use the assigned bits
                         self.trace.num_bits = signal.val._nrbits
                     else:
                         # Unknown type of value. Just give it this width and hope.
@@ -63,5 +62,10 @@ class Peeker(PeekerBase):
 
     @classmethod
     def instances(cls):
-        """Return a list of all the instantiated Peeker modules."""
+        """
+        Returns a list of all the instantiated Peeker modules.
+
+        Returns:
+            list: A list of all instantiated Peeker modules.
+        """
         return [p.instance for p in cls.peekers.values()]

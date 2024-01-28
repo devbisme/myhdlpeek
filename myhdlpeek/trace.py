@@ -860,8 +860,6 @@ def traces_to_matplotlib(*traces, **kwargs):
             axis.spines["bottom"].set_visible(False)
 
 
-
-
         else:
             trace.to_matplotlib(axis, start_time, stop_time, xlim, **kwargs)
 
@@ -870,6 +868,10 @@ def traces_to_matplotlib(*traces, **kwargs):
             # Set the y-axis label position with a negative offset to move it to the left
             axis.yaxis.set_label_coords(-0.01, 0.5)  # You may need to adjust the x-value
 
+            # Draw thin black lines at the top and bottom of the axis for better trace separation to the eye:
+            mins, maxes = axis.get_ylim()
+            axis.axhline(mins,  color='black', linewidth=.75, alpha=.15)  # Bottom line
+            axis.axhline(maxes, color='black', linewidth=.75, alpha=.15)  # Top line
 
     # Return figure and axes for possible further processing.
     return fig, axes

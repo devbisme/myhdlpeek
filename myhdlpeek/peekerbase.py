@@ -14,7 +14,6 @@ from collections import namedtuple
 import IPython.display as DISP
 import matplotlib.pyplot as plt
 import nbwavedrom
-from future import standard_library
 from tabulate import tabulate
 
 from .trace import *

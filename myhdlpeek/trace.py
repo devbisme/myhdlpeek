@@ -726,7 +726,7 @@ def _interpolate_traces(*traces, times):
 def traces_to_matplotlib(*traces, **kwargs):
     """
     Display waveforms stored in peekers in Jupyter notebook using matplotlib.
-    
+
         Args:
             *traces: A list of traces to convert into matplotlib for display.
                 Can also contain None which will create a blank trace.
@@ -789,6 +789,23 @@ def traces_to_matplotlib(*traces, **kwargs):
     )
     axes = axes[:, 0]  # Collapse 2D matrix of subplots into a 1D list.
 
+    # Render the figure canvas to get accurate text extents.
+    fig.canvas.draw()
+
+    # Calculate the maximum width needed for the y-axis labels.
+    max_label_width = 0
+    renderer = fig.canvas.get_renderer()
+    for axis in axes:
+        label_width = axis.yaxis.get_label().get_window_extent(renderer).width
+        max_label_width = max(max_label_width, label_width)
+
+    # Convert from display coords to figure coords and add padding.
+    max_label_width /= fig.dpi  # Convert from pixels to inches.
+    max_label_width += 0.1  # Add padding.
+
+    # Adjust the left margin of the figure based on the max label width.
+    fig.subplots_adjust(left=max_label_width / fig.get_figwidth() + 0.1)
+
     # Set the caption on the X-axis label on the bottom-most trace.
     axes[-1].set_xlabel(caption, **caption_fmt)
 
@@ -841,8 +858,18 @@ def traces_to_matplotlib(*traces, **kwargs):
             axis.spines["right"].set_visible(False)
             axis.spines["top"].set_visible(False)
             axis.spines["bottom"].set_visible(False)
+
+
+
+
         else:
             trace.to_matplotlib(axis, start_time, stop_time, xlim, **kwargs)
+
+            # Align the y-axis label to the right
+            axis.yaxis.label.set_horizontalalignment('right')
+            # Set the y-axis label position with a negative offset to move it to the left
+            axis.yaxis.set_label_coords(-0.01, 0.5)  # You may need to adjust the x-value
+
 
     # Return figure and axes for possible further processing.
     return fig, axes

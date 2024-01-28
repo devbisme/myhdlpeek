@@ -3,15 +3,13 @@
 # Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
 
 
-import functools
-from builtins import dict, int, str, super
+#import functools
+#from builtins import dict, int, str, super
 
-from future import standard_library
 from amaranth.sim import Tick
 
 from ..peekerbase import *
 
-standard_library.install_aliases()
 
 
 class Peeker(PeekerBase):

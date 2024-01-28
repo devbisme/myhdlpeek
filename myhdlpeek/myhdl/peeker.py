@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
-from __future__ import absolute_import, division, print_function, unicode_literals
 import functools
 from builtins import dict, int, str, super
 from myhdl import EnumItemType, SignalType, intbv,  always_comb, now
 from myhdl.conversion import _toVerilog, _toVHDL
 from ..peekerbase import *
+import platform
 
 class Peeker(PeekerBase):
     """Extends the PeekerBase to create an object that peeks or monitors a signal for use with myhdl."""
@@ -50,8 +50,8 @@ class Peeker(PeekerBase):
                     if isinstance(signal.val, bool):
                         self.trace.num_bits = 1
                     elif isinstance(signal.val, int):
-                        #represent an int by 2's compliment length
-                        self.trace.num_bits = signal.val.bit_length()+1
+                        #represent an int by machines architecture size
+                        self.trace.num_bits = int(platform.architecture()[0].split('bit')[0])
                     elif isinstance(signal.val, intbv):
                         #if intbv then use the assigned bits
                         self.trace.num_bits = signal.val._nrbits

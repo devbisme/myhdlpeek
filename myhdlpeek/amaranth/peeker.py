@@ -2,13 +2,12 @@
 
 # Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
 
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import functools
 from builtins import dict, int, str, super
 
 from future import standard_library
-from nmigen.sim import Tick
+from amaranth.sim import Tick
 
 from ..peekerbase import *
 

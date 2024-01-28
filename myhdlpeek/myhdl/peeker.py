@@ -4,7 +4,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import functools
 from builtins import dict, int, str, super
 from myhdl import EnumItemType, SignalType, intbv,  always_comb, now
-from myhdl._compat import integer_types
 from myhdl.conversion import _toVerilog, _toVHDL
 from ..peekerbase import *
 

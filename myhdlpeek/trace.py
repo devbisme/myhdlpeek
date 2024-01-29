@@ -2,7 +2,6 @@
 
 # Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
 
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
 import math
@@ -14,10 +13,8 @@ from copy import copy
 import IPython.display as DISP
 import matplotlib.pyplot as plt
 import pandas as pd
-from future import standard_library
 from tabulate import tabulate
 
-standard_library.install_aliases()
 
 
 # Waveform samples consist of a time and a value.

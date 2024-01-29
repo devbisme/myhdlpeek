@@ -8,6 +8,8 @@ test_myhdlpeek
 Tests for `myhdlpeek` module.
 """
 
+#the better testing is done in examples/complete.ipynb
+
 import unittest
 
 from myhdlpeek import myhdlpeek

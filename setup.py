@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 
 author = "Dave Vandenbout"
 email = "devb@xess.com"
-version = "0.0.10"
+version = "0.0.11"
 
 if "sdist" in sys.argv[1:]:
     with open("myhdlpeek/pckg_info.py", "w") as f:
@@ -28,13 +28,21 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     # Put package requirements here
-    "future >= 0.15.0",
     "myhdl",
-    "nmigen",
+    "amaranth",
     "tabulate",
     "pandas",
     "nbwavedrom",
+    "IPython",
+    "jupyterlab",
+    "IPython",
+    "nbconvert",
+    "nbformat",
+    "matplotlib",
+
 ]
+
+
 
 test_requirements = [
     # Put package test requirements here
@@ -44,7 +52,7 @@ test_requirements = [
 setup(
     name="myhdlpeek",
     version=version,
-    description="Peek at signals in a MyHDL or nMigen digital system simulation.",
+    description="Peek at signals in a MyHDL or Amaranth digital system simulation.",
     long_description=readme + "\n\n" + history,
     author=author,
     author_email=email,
@@ -65,9 +73,9 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.11",
     ],
     test_suite="tests",
+    #the better testing is done in examples/complete.ipynb
     tests_require=test_requirements,
 )

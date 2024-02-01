@@ -4,6 +4,13 @@ History
 -------
 
 
+1.0.0 (2024-02-01)
+______________________
+
+* Ported from nmigen to Amaranth (by Steven Armour).
+* Bumped release to 1.0.0 and classified it as stable because this thing is seven years old.
+
+
 0.0.10 (2021-07-06)
 ______________________
 

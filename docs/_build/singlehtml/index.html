@@ -4,12 +4,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>myhdlpeek 0.0.10 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>myhdlpeek 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -20,8 +21,8 @@
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
-        <li class="nav-item nav-item-0"><a href="#">myhdlpeek 0.0.10 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">myhdlpeek 0.0.10 documentation</a></li> 
+        <li class="nav-item nav-item-0"><a href="#">myhdlpeek 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">myhdlpeek 1.0.0 documentation</a></li> 
       </ul>
     </div>  
 
@@ -30,16 +31,16 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="welcome-to-myhdlpeek-s-documentation">
+  <section id="welcome-to-myhdlpeek-s-documentation">
 <h1>Welcome to myhdlpeek’s documentation!<a class="headerlink" href="#welcome-to-myhdlpeek-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
-<span id="document-readme"></span><div class="section" id="myhdlpeek">
+<span id="document-readme"></span><section id="myhdlpeek">
 <h2>myhdlpeek<a class="headerlink" href="#myhdlpeek" title="Permalink to this headline">¶</a></h2>
 <a class="reference external image-reference" href="https://pypi.python.org/pypi/myhdlpeek"><img alt="https://img.shields.io/pypi/v/myhdlpeek.svg" src="https://img.shields.io/pypi/v/myhdlpeek.svg" /></a>
 <p>A module that lets you monitor signals in a
-<a class="reference external" href="http://www.myhdl.org/">MyHDL</a> or <a class="reference external" href="https://m-labs.hk/gateware/nmigen/">nMigen</a> digital system simulation
-and display them as waveforms in a Jupyter notebook.
+<a class="reference external" href="http://www.myhdl.org/">MyHDL</a> or <a class="reference external" href="https://github.com/amaranth-lang">Amaranth</a>
+digital system simulation and display them as waveforms in a Jupyter notebook.
 Make changes to your digital design and see the results reflected immediately in the
 waveforms of your notebook!</p>
 <p><cite>myhdlpeek</cite> implements a <cite>Peeker</cite> object that monitors a signal and records
@@ -58,10 +59,10 @@ shows how to use myhdlpeek.</p>
 <li><p>Free software: MIT license</p></li>
 <li><p>Documentation: <a class="reference external" href="http://devbisme.github.io/myhdlpeek">http://devbisme.github.io/myhdlpeek</a></p></li>
 </ul>
-<div class="section" id="features">
+<section id="features">
 <h3>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Captures timing traces of signals in a MyHDL/nMigen digital design.</p></li>
+<li><p>Captures timing traces of signals in a MyHDL/Amaranth digital design.</p></li>
 <li><p>Works at the top-level and sub-levels of a hierarchical design.</p></li>
 <li><p>All signals or a selected subset can be displayed.</p></li>
 <li><p>The beginning and ending points of the waveform display can be set.</p></li>
@@ -70,9 +71,9 @@ shows how to use myhdlpeek.</p>
 <li><p>Tabular output in Jupyter and console.</p></li>
 <li><p>Trigger expressions allow the display of a selected portion of traces.</p></li>
 </ul>
-</div>
-</div>
-<span id="document-installation"></span><div class="section" id="installation">
+</section>
+</section>
+<span id="document-installation"></span><section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>At the command line:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ easy_install myhdlpeek
@@ -83,20 +84,20 @@ shows how to use myhdlpeek.</p>
 $ pip install myhdlpeek
 </pre></div>
 </div>
-</div>
-<span id="document-usage"></span><div class="section" id="usage">
+</section>
+<span id="document-usage"></span><section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://github.com/devbisme/myhdlpeek/blob/master/examples/complete.ipynb">[This Jupyter notebook]</a>
 will illustrate how to use myhdlpeek.</p>
-</div>
-<span id="document-contributing"></span><div class="section" id="contributing">
+</section>
+<span id="document-contributing"></span><section id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
 <p>Contributions are welcome, and they are greatly appreciated! Every
 little bit helps, and credit will always be given.</p>
 <p>You can contribute in many ways:</p>
-<div class="section" id="types-of-contributions">
+<section id="types-of-contributions">
 <h3>Types of Contributions<a class="headerlink" href="#types-of-contributions" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="report-bugs">
+<section id="report-bugs">
 <h4>Report Bugs<a class="headerlink" href="#report-bugs" title="Permalink to this headline">¶</a></h4>
 <p>Report bugs at <a class="reference external" href="https://github.com/devbisme/myhdlpeek/issues">https://github.com/devbisme/myhdlpeek/issues</a>.</p>
 <p>If you are reporting a bug, please include:</p>
@@ -105,24 +106,24 @@ little bit helps, and credit will always be given.</p>
 <li><p>Any details about your local setup that might be helpful in troubleshooting.</p></li>
 <li><p>Detailed steps to reproduce the bug.</p></li>
 </ul>
-</div>
-<div class="section" id="fix-bugs">
+</section>
+<section id="fix-bugs">
 <h4>Fix Bugs<a class="headerlink" href="#fix-bugs" title="Permalink to this headline">¶</a></h4>
 <p>Look through the GitHub issues for bugs. Anything tagged with “bug”
 is open to whoever wants to implement it.</p>
-</div>
-<div class="section" id="implement-features">
+</section>
+<section id="implement-features">
 <h4>Implement Features<a class="headerlink" href="#implement-features" title="Permalink to this headline">¶</a></h4>
 <p>Look through the GitHub issues for features. Anything tagged with “feature”
 is open to whoever wants to implement it.</p>
-</div>
-<div class="section" id="write-documentation">
+</section>
+<section id="write-documentation">
 <h4>Write Documentation<a class="headerlink" href="#write-documentation" title="Permalink to this headline">¶</a></h4>
 <p>myhdlpeek could always use more documentation, whether as part of the
 official myhdlpeek docs, in docstrings, or even on the web in blog posts,
 articles, and such.</p>
-</div>
-<div class="section" id="submit-feedback">
+</section>
+<section id="submit-feedback">
 <h4>Submit Feedback<a class="headerlink" href="#submit-feedback" title="Permalink to this headline">¶</a></h4>
 <p>The best way to send feedback is to file an issue at <a class="reference external" href="https://github.com/devbisme/myhdlpeek/issues">https://github.com/devbisme/myhdlpeek/issues</a>.</p>
 <p>If you are proposing a feature:</p>
@@ -132,9 +133,9 @@ articles, and such.</p>
 <li><p>Remember that this is a volunteer-driven project, and that contributions
 are welcome :)</p></li>
 </ul>
-</div>
-</div>
-<div class="section" id="get-started">
+</section>
+</section>
+<section id="get-started">
 <h3>Get Started!<a class="headerlink" href="#get-started" title="Permalink to this headline">¶</a></h3>
 <p>Ready to contribute? Here’s how to set up <cite>myhdlpeek</cite> for local development.</p>
 <ol class="arabic">
@@ -174,8 +175,8 @@ $ git push origin name-of-your-bugfix-or-feature
 </li>
 <li><p>Submit a pull request through the GitHub website.</p></li>
 </ol>
-</div>
-<div class="section" id="pull-request-guidelines">
+</section>
+<section id="pull-request-guidelines">
 <h3>Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Permalink to this headline">¶</a></h3>
 <p>Before you submit a pull request, check that it meets these guidelines:</p>
 <ol class="arabic simple">
@@ -187,110 +188,117 @@ feature to the list in README.rst.</p></li>
 <a class="reference external" href="https://travis-ci.org/devbisme/myhdlpeek/pull_requests">https://travis-ci.org/devbisme/myhdlpeek/pull_requests</a>
 and make sure that the tests pass for all supported Python versions.</p></li>
 </ol>
-</div>
-<div class="section" id="tips">
+</section>
+<section id="tips">
 <h3>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h3>
 <p>To run a subset of tests:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python -m unittest tests.test_myhdlpeek
 </pre></div>
 </div>
-</div>
-</div>
-<span id="document-authors"></span><div class="section" id="credits">
+</section>
+</section>
+<span id="document-authors"></span><section id="credits">
 <h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="development-lead">
+<section id="development-lead">
 <h3>Development Lead<a class="headerlink" href="#development-lead" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Dave Vandenbout &lt;<a class="reference external" href="mailto:devb&#37;&#52;&#48;xess&#46;com">devb<span>&#64;</span>xess<span>&#46;</span>com</a>&gt;</p></li>
+<li><p>Dave Vandenbout &lt;<a class="reference external" href="mailto:dave&#37;&#52;&#48;vdb&#46;name">dave<span>&#64;</span>vdb<span>&#46;</span>name</a>&gt;</p></li>
 </ul>
-</div>
-<div class="section" id="contributors">
+</section>
+<section id="contributors">
 <h3>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
-<p>Abhishek Bajpai - <a class="reference external" href="https://github.com/abhisheietk">https://github.com/abhisheietk</a></p>
-</div>
-</div>
-<span id="document-history"></span><div class="section" id="history">
+<p>Here’s the <a class="reference external" href="https://github.com/devbisme/myhdlpeek/graphs/contributors">list of contributors</a>.</p>
+</section>
+</section>
+<span id="document-history"></span><section id="history">
 <h2>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id1">
-<h3>0.0.10 (2021-07-06)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<section id="id1">
+<h3>1.0.0 (2024-02-01)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Ported from nmigen to Amaranth (by Steven Armour).</p></li>
+<li><p>Bumped release to 1.0.0 and classified it as stable because this thing is seven years old.</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>0.0.10 (2021-07-06)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Moved ownership from xesscorp to devbisme (Dave Vandenbout).</p></li>
 </ul>
-</div>
-<div class="section" id="id2">
-<h3>0.0.9 (2021-01-05)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id3">
+<h3>0.0.9 (2021-01-05)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added support for nMigen.</p></li>
 <li><p>Waveforms can now be drawn using wavedrom or matplotlib.</p></li>
 </ul>
-</div>
-<div class="section" id="id3">
-<h3>0.0.8 (2018-09-25)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id4">
+<h3>0.0.8 (2018-09-25)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Now works with the newer JupyterLab by default. Older Jupyter notebooks are still supported by setting <code class="docutils literal notranslate"><span class="pre">myhdlpeek.USE_JUPYTERLAB</span> <span class="pre">=</span> <span class="pre">False</span></code>.</p></li>
 <li><p>Updated documentation.</p></li>
 </ul>
-</div>
-<div class="section" id="id4">
-<h3>0.0.7 (2018-04-13)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id5">
+<h3>0.0.7 (2018-04-13)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added functions to export signal traces into a Pandas dataframe.</p></li>
 <li><p>Updated documentation.</p></li>
 </ul>
-</div>
-<div class="section" id="id5">
-<h3>0.0.6 (2017-10-11)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id6">
+<h3>0.0.6 (2017-10-11)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>The skin can now be set for waveform traces (either ‘default’ or ‘narrow’).</p></li>
 <li><p>clear_traces() was added to remove signal trace data from Peekers without removing the Peekers so another simulation can be run.</p></li>
 <li><p>Updated documentation.</p></li>
 <li><p>Removed unused __main__.py.</p></li>
 </ul>
-</div>
-<div class="section" id="id6">
-<h3>0.0.5 (2017-08-25)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id7">
+<h3>0.0.5 (2017-08-25)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added PeekerGroup class to allow grouping of Peekers.</p></li>
 <li><p>Trace objects now only return integer values.</p></li>
 </ul>
-</div>
-<div class="section" id="id7">
-<h3>0.0.4 (2017-07-04)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id8">
+<h3>0.0.4 (2017-07-04)<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added trigger capability to select a portion of traces for display.</p></li>
 <li><p>Extended waveform &amp; table display to both Peekers and Traces.</p></li>
 </ul>
-</div>
-<div class="section" id="id8">
-<h3>0.0.3 (2017-06-23)<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id9">
+<h3>0.0.3 (2017-06-23)<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Made compatible with Python 2.7.</p></li>
 <li><p>Added tabular output of Peeker data traces.</p></li>
 </ul>
-</div>
-<div class="section" id="id9">
-<h3>0.0.2 (2017-06-12)<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id10">
+<h3>0.0.2 (2017-06-12)<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added static HTML pages to display what myhdlpeek can do. (Notebook rendering with nbconvert won’t show waveforms.)</p></li>
 </ul>
-</div>
-<div class="section" id="id10">
-<h3>0.0.1 (2017-06-10)<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="id11">
+<h3>0.0.1 (2017-06-10)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>First release on PyPI.</p></li>
 </ul>
+</section>
+</section>
 </div>
-</div>
-</div>
-</div>
-<div class="section" id="indices-and-tables">
+</section>
+<section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
-</div>
+</section>
 
 
             <div class="clearer"></div>
@@ -299,8 +307,9 @@ and make sure that the tests pass for all supported Python versions.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html#document-readme">myhdlpeek</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="index.html#features">Features</a></li>
 </ul>
@@ -320,20 +329,22 @@ and make sure that the tests pass for all supported Python versions.</p></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="index.html#document-history">History</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id1">0.0.10 (2021-07-06)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id2">0.0.9 (2021-01-05)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id3">0.0.8 (2018-09-25)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id4">0.0.7 (2018-04-13)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id5">0.0.6 (2017-10-11)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id6">0.0.5 (2017-08-25)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id7">0.0.4 (2017-07-04)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id8">0.0.3 (2017-06-23)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id9">0.0.2 (2017-06-12)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="index.html#id10">0.0.1 (2017-06-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id1">1.0.0 (2024-02-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id2">0.0.10 (2021-07-06)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id3">0.0.9 (2021-01-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id4">0.0.8 (2018-09-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id5">0.0.7 (2018-04-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id6">0.0.6 (2017-10-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id7">0.0.5 (2017-08-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id8">0.0.4 (2017-07-04)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id9">0.0.3 (2017-06-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id10">0.0.2 (2017-06-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#id11">0.0.1 (2017-06-10)</a></li>
 </ul>
 </li>
 </ul>
 
+  </div>
         </div>
       </div>
       <div class="clearer"></div>
@@ -341,13 +352,13 @@ and make sure that the tests pass for all supported Python versions.</p></li>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
-        <li class="nav-item nav-item-0"><a href="#">myhdlpeek 0.0.10 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">myhdlpeek 0.0.10 documentation</a></li> 
+        <li class="nav-item nav-item-0"><a href="#">myhdlpeek 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">myhdlpeek 1.0.0 documentation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017-2021, Dave Vandenbout..
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+        &#169; Copyright 2017-2024, Dave Vandenbout..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
     </div>
   </body>
 </html>

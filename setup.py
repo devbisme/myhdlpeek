@@ -6,8 +6,8 @@ from os import sys
 from setuptools import find_packages, setup
 
 author = "Dave Vandenbout"
-email = "devb@xess.com"
-version = "0.0.11"
+email = "dave@vdb.name"
+version = "1.0.0"
 
 if "sdist" in sys.argv[1:]:
     with open("myhdlpeek/pckg_info.py", "w") as f:
@@ -35,11 +35,9 @@ requirements = [
     "nbwavedrom",
     "IPython",
     "jupyterlab",
-    "IPython",
     "nbconvert",
     "nbformat",
     "matplotlib",
-
 ]
 
 
@@ -69,11 +67,12 @@ setup(
     zip_safe=False,
     keywords="myhdlpeek",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3 :: Only",
+        "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     ],
     test_suite="tests",
     #the better testing is done in examples/complete.ipynb

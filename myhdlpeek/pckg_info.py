@@ -1,3 +1,3 @@
-version = '0.0.11'
+version = '1.0.0'
 author = 'Dave Vandenbout'
-email = 'devb@xess.com'
+email = 'dave@vdb.name'

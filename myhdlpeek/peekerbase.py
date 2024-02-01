@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
+# Copyright (c) 2017-2024, Dave Vandenbout. The MIT License (MIT).
 
 # TODO: Use https://github.com/bendichter/brokenaxes to break long traces into segments.
 

@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* Dave Vandenbout <devb@xess.com>
+* Dave Vandenbout <dave@vdb.name>
 
 Contributors
 ------------
 
-Abhishek Bajpai - https://github.com/abhisheietk
+Here's the `list of contributors <https://github.com/devbisme/myhdlpeek/graphs/contributors>`_.

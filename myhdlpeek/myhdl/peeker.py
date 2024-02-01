@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017-2021, Dave Vandenbout. The MIT License (MIT).
+# Copyright (c) 2017-2024, Dave Vandenbout. The MIT License (MIT).
 import functools
 from builtins import dict, int, str, super
 from myhdl import EnumItemType, SignalType, intbv,  always_comb, now
